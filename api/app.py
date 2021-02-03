@@ -2,10 +2,15 @@ import os
 from datetime import datetime
 from typing import Any, Dict, List, Union
 
-from flask import Flask, abort, json
+from flask import Flask, abort, json, send_from_directory
 from h5pyd import Dataset, File, Folder, Group, getServerInfo
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/')
+
+
+@app.route("/")
+def index():
+    return send_from_directory("static", "index.html")
 
 
 def convert_timestamp(timestamp: float) -> str:
