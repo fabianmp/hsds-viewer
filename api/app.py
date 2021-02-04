@@ -5,8 +5,10 @@ from typing import Any, Dict, List, Union
 from flask import Flask, abort, json, send_from_directory
 from h5pyd import Dataset, File, Folder, Group, getServerInfo
 
-app = Flask(__name__, static_url_path='/')
+from authentication import configure_authentication
 
+app = Flask(__name__, static_url_path='/')
+configure_authentication(app)
 
 @app.route("/")
 def index():
