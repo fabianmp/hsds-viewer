@@ -1,0 +1,16 @@
+apiVersion: v2
+name: hsds-viewer
+description: A Helm chart for HSDS-Viewer
+version: 0.1.0
+appVersion: v0.1.0
+type: application
+home: https://github.com/fabianmp/hsds-viewer
+sources:
+  - https://github.com/fabianmp/hsds-viewer
+maintainers:
+  - name: Fabian Zach
+    email: fabian.zach@methodpark.de
+keywords:
+  - HSDS
+  - HDF5
+  - frontend
