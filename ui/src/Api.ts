@@ -1,7 +1,7 @@
 export interface Node {
   path: string
   name: string
-  type: string
+  type: "folder" | "domain"
   owner: string
   created: string
   modified: string

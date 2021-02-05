@@ -11,7 +11,9 @@ interface Props {
 }
 
 export default function Folder({ node }: Props) {
-  const { data: domains = [] } = useSWR<Node[]>(`/api/list-folder${node.path}`)
+  const { data: content = [] } = useSWR<Node[]>(`/api/list-folder${node.path}`)
+  const folders = content.filter(node => node.type === "folder")
+  const domains = content.filter(node => node.type === "domain")
 
   return (
     <TreeItem nodeId={node.path} icon={<FolderIcon />} label={
@@ -21,6 +23,7 @@ export default function Folder({ node }: Props) {
         <Grid item xs={3}><b>Created:</b> {node.created}</Grid>
         <Grid item xs={3}><b>Modified:</b> {node.modified}</Grid>
       </Grid>}>
+      {folders.map((folder: Node) => <Folder key={folder.path} node={folder} />)}
       {domains.map((domain: Node) => <Domain key={domain.path} node={domain} />)}
     </TreeItem>
   );
