@@ -10,9 +10,15 @@ from authentication import configure_authentication
 app = Flask(__name__, static_url_path='/')
 configure_authentication(app)
 
+
 @app.route("/")
 def index():
     return send_from_directory("static", "index.html")
+
+
+@app.route("/healthz")
+def healthz():
+    return "OK"
 
 
 def convert_timestamp(timestamp: float) -> str:

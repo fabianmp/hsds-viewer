@@ -34,9 +34,14 @@ def configure_authentication(app):
         }
     )
 
+    excluded_urls = (
+        '/auth',
+        '/healthz',
+    )
+
     @app.before_request
     def require_login():
-        if "user" not in session and request.path != url_for('auth'):
+        if "user" not in session and request.path not in excluded_urls:
             return oauth.oidc.authorize_redirect(url_for('auth', _external=True, redirect_path=request.full_path))
 
     @app.route('/auth')
