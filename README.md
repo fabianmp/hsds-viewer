@@ -22,3 +22,4 @@ Environment Variable | Default Value | Description
 `OIDC_ENDPOINT`      | `None`        | OIDC provider endpoint (URI to `.well-known` configuration)
 `OIDC_CLIENT_ID`     | `None`        | OIDC client name
 `OIDC_CLIENT_SECRET` | `None`        | OIDC client secret
+`USE_PROXY_FIX`      | `False`       | Activate ProxyFix middleware to set external server name correctly behind reverse proxy

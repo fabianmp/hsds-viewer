@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Union
 
 from flask import Flask, abort, json, send_from_directory
 from h5pyd import Dataset, File, Folder, Group, getServerInfo
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from authentication import configure_authentication
 
@@ -92,6 +93,10 @@ def get_file_info(path: str) -> Dict[str, Any]:
         else:
             raise
     return json.dumps(info)
+
+
+if os.environ.get("USE_PROXY_FIX", False):
+    app = ProxyFix(app, x_for=1, x_host=1)
 
 
 if __name__ == "__main__":
