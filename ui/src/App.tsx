@@ -20,7 +20,7 @@ const useStyles = makeStyles((theme: Theme) =>
       flexGrow: 1,
       height: '100vh',
       overflow: 'auto',
-      marginTop: theme.spacing(10),
+      paddingTop: theme.spacing(10),
     },
     column: {
       paddingLeft: theme.spacing(2),
