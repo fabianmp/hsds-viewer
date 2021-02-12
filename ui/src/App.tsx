@@ -1,16 +1,17 @@
 import Box from '@material-ui/core/Box';
 import CssBaseline from '@material-ui/core/CssBaseline';
+import Drawer from '@material-ui/core/Drawer';
 import Grid from '@material-ui/core/Grid';
+import Hidden from '@material-ui/core/Hidden';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
-import FolderIcon from '@material-ui/icons/Folder';
-import FolderOpenIcon from '@material-ui/icons/FolderOpen';
-import LibraryBooksIcon from '@material-ui/icons/LibraryBooks';
-import TreeView from '@material-ui/lab/TreeView';
-import React, { ChangeEvent, useState } from 'react';
+import clsx from 'clsx';
+import React, { useCallback, useState } from 'react';
 import useSWR from 'swr';
-import { File, Node } from './Api';
-import FileInfo from './components/FileInfo';
-import Folder from './components/Folder';
+import { Domain, Folder } from './Api';
+import AccessControl from './components/AccessControl';
+import DomainInfo from './components/DomainInfo';
+import FolderContent from './components/FolderContent';
+import FolderTree from './components/FolderTree';
 import TitleBar from './components/TitleBar';
 
 
@@ -25,33 +26,61 @@ const useStyles = makeStyles((theme: Theme) =>
     column: {
       paddingLeft: theme.spacing(2),
       paddingRight: theme.spacing(2),
-    }
+    },
+    drawerSmall: {
+      minWidth: '50vw',
+    },
+    drawerLarge: {
+      width: 350,
+    },
+    drawerPaperSmall: {
+      overflow: 'auto',
+      paddingTop: theme.spacing(2),
+      paddingLeft: theme.spacing(2),
+      paddingRight: theme.spacing(2),
+    },
+    drawerPaperLarge: {
+      overflow: 'auto',
+      paddingTop: theme.spacing(10),
+      paddingLeft: theme.spacing(2),
+      paddingRight: theme.spacing(2),
+    },
   }),
 );
 
 export default function App() {
-  const [selectedFile, setSelectedFile] = useState<string>("");
-  const { data: folders = [] } = useSWR<Node[]>('/api/list-folder/');
-  const { data: fileInfo = null } = useSWR<File>(`/api/file-info${selectedFile}`)
+  const [selectedFolderPath, setSelectedFolderPath] = useState<string>("");
+  const [selectedDomainPath, setSelectedDomainPath] = useState<string>("");
+  const { data: folder = undefined } = useSWR<Folder>('/api/folder/');
+  const { data: selectedFolder = null } = useSWR<Folder>(`/api/folder${selectedFolderPath}/`)
+  const { data: selectedDomain = null } = useSWR<Domain>(`/api/domain${selectedDomainPath}`)
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const handleDrawerToggle = useCallback(() => setDrawerOpen(!drawerOpen), [drawerOpen]);
 
   const classes = useStyles();
   return (
     <Box display="flex">
       <CssBaseline />
-      <TitleBar />
+      <TitleBar toggleMenu={handleDrawerToggle} />
+      <Hidden lgUp implementation="css">
+        <Drawer variant="temporary" className={classes.drawerSmall} classes={{ paper: clsx(classes.drawerSmall, classes.drawerPaperSmall) }}
+          open={drawerOpen} onClose={handleDrawerToggle}>
+          {folder && <FolderTree folder={folder} handleNodeSelect={setSelectedFolderPath} />}
+        </Drawer>
+      </Hidden>
+      <Hidden mdDown implementation="css">
+        <Drawer variant="permanent" className={classes.drawerLarge} classes={{ paper: clsx(classes.drawerLarge, classes.drawerPaperLarge) }} open>
+          {folder && <FolderTree folder={folder} handleNodeSelect={setSelectedFolderPath} />}
+        </Drawer>
+      </Hidden>
       <Grid container className={classes.content}>
-        <Grid item xs={9} className={classes.column}>
-          <TreeView
-            onNodeSelect={(e: ChangeEvent<{}>, s: string) => setSelectedFile(s)}
-            defaultExpanded={[]}
-            defaultCollapseIcon={<FolderOpenIcon />}
-            defaultExpandIcon={<FolderIcon />}
-            defaultEndIcon={<LibraryBooksIcon />}>
-            {folders.map((folder: Node) => <Folder key={folder.path} node={folder} />)}
-          </TreeView>
+        <Grid item xs={12} md={8} xl={9} className={classes.column}>
+          {selectedFolder && selectedFolder.acls && <AccessControl acls={selectedFolder.acls} />}
+          {selectedFolder && <FolderContent folder={selectedFolder} handleSelect={setSelectedDomainPath} selected={selectedDomainPath} />}
         </Grid>
-        {fileInfo && <Grid item xs={3} className={classes.column}>
-          <FileInfo file={fileInfo} />
+        {selectedDomain && <Grid item xs={12} md={4} xl={3} className={classes.column}>
+          <DomainInfo domain={selectedDomain} />
         </Grid>}
       </Grid>
     </Box>

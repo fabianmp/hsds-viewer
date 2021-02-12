@@ -11,7 +11,7 @@ import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import ArchiveIcon from '@material-ui/icons/Archive';
 import prettyBytes from 'pretty-bytes';
 import React from "react";
-import { File } from "../Api";
+import { Domain, GroupType } from "../Api";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -40,28 +40,28 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 interface Props {
-  file: File
+  domain: Domain
 }
 
-export default function FileInfo({ file }: Props) {
+export default function DomainInfo({ domain }: Props) {
   const classes = useStyles();
   return (
     <Card>
-      <CardHeader title={file.filename} subheader={`${file.domain}/`}
+      <CardHeader title={domain.filename} subheader={`${domain.domain}/`} titleTypographyProps={{ variant: 'body1' }}
         subheaderTypographyProps={{ variant: 'body2' }} className={classes.header} />
       <CardContent className={classes.content}>
         <List dense disablePadding subheader={<ListSubheader disableGutters className={classes.groupHeader}><b>Metadata</b></ListSubheader>}>
-          <ListItem className={classes.metadata}><ListItemText><b>MD5:</b> {file.md5_sum}</ListItemText></ListItem>
-          <ListItem className={classes.metadata}><ListItemText><b>Owner:</b> {file.owner}</ListItemText></ListItem>
-          <ListItem className={classes.metadata}><ListItemText><b>Created:</b> {file.created}</ListItemText></ListItem>
-          <ListItem className={classes.metadata}><ListItemText><b>Modified:</b> {file.modified}</ListItemText></ListItem>
-          <ListItem className={classes.metadata}><ListItemText><b>Size:</b> {prettyBytes(file.total_size)}</ListItemText></ListItem>
-          <ListItem className={classes.metadata}><ListItemText><b>Chunks:</b> {file.num_chunks}</ListItemText></ListItem>
-          <ListItem className={classes.metadata}><ListItemText><b>Groups:</b> {file.num_groups}</ListItemText></ListItem>
+          <ListItem className={classes.metadata}><ListItemText><b>MD5:</b> {domain.md5_sum}</ListItemText></ListItem>
+          <ListItem className={classes.metadata}><ListItemText><b>Owner:</b> {domain.owner}</ListItemText></ListItem>
+          <ListItem className={classes.metadata}><ListItemText><b>Created:</b> {domain.created}</ListItemText></ListItem>
+          <ListItem className={classes.metadata}><ListItemText><b>Modified:</b> {domain.modified}</ListItemText></ListItem>
+          <ListItem className={classes.metadata}><ListItemText><b>Size:</b> {prettyBytes(domain.total_size)}</ListItemText></ListItem>
+          <ListItem className={classes.metadata}><ListItemText><b>Chunks:</b> {domain.num_chunks}</ListItemText></ListItem>
+          <ListItem className={classes.metadata}><ListItemText><b>Groups:</b> {domain.num_groups}</ListItemText></ListItem>
         </List>
         <Divider />
         <List dense disablePadding subheader={<ListSubheader disableGutters className={classes.groupHeader}><b>Groups</b></ListSubheader>}>
-          {file.groups.map(group =>
+          {domain.groups.map((group: GroupType) =>
             <ListItem disableGutters>
               <ListItemIcon className={classes.groupIcon}><ArchiveIcon /></ListItemIcon>
               <ListItemText primary={group.name}
