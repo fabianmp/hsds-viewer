@@ -36,6 +36,9 @@ export interface GroupType {
   name: string
   type: string
   size?: number
+  dimensions?: number
+  chunks?: number
+  datatype?: string
 }
 
 export interface Domain {

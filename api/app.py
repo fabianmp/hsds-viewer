@@ -82,6 +82,9 @@ def get_group_info(group: Union[Group, Dataset]) -> Dict[str, Any]:
     elif isinstance(group, Dataset):
         info["type"] = "Dataset"
         info["size"] = group.allocated_size
+        info["dimensions"] = group.ndim
+        info["chunks"] = group.num_chunks
+        info["datatype"] = group.dtype.str
     return info
 
 
