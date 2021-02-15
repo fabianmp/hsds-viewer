@@ -52,8 +52,8 @@ export default function App() {
   const [selectedFolderPath, setSelectedFolderPath] = useState<string>("");
   const [selectedDomainPath, setSelectedDomainPath] = useState<string>("");
   const { data: folder = undefined } = useSWR<Folder>('/api/folder/');
-  const { data: selectedFolder = null } = useSWR<Folder>(`/api/folder${selectedFolderPath}/`)
-  const { data: selectedDomain = null } = useSWR<Domain>(`/api/domain${selectedDomainPath}`)
+  const { data: selectedFolder = null } = useSWR<Folder>(selectedFolderPath ? `/api/folder${selectedFolderPath}/` : null)
+  const { data: selectedDomain = null } = useSWR<Domain>(selectedDomainPath ? `/api/domain${selectedDomainPath}` : null)
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const handleDrawerToggle = useCallback(() => setDrawerOpen(!drawerOpen), [drawerOpen]);
