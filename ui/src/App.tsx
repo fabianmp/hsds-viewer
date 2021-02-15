@@ -1,9 +1,12 @@
 import Box from '@material-ui/core/Box';
+import Breadcrumbs from '@material-ui/core/Breadcrumbs';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import Drawer from '@material-ui/core/Drawer';
 import Grid from '@material-ui/core/Grid';
 import Hidden from '@material-ui/core/Hidden';
+import Link from '@material-ui/core/Link';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
+import Typography from '@material-ui/core/Typography';
 import clsx from 'clsx';
 import React, { useCallback, useState } from 'react';
 import useSWR from 'swr';
@@ -13,6 +16,7 @@ import DomainInfo from './components/DomainInfo';
 import FolderContent from './components/FolderContent';
 import FolderTree from './components/FolderTree';
 import TitleBar from './components/TitleBar';
+import HomeIcon from '@material-ui/icons/Home';
 
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -45,6 +49,17 @@ const useStyles = makeStyles((theme: Theme) =>
       paddingLeft: theme.spacing(2),
       paddingRight: theme.spacing(2),
     },
+    breadCrumbs: {
+      padding: theme.spacing(1),
+    },
+    homeIcon: {
+      display: 'flex',
+      alignItems: 'center',
+      flexWrap: 'wrap',
+      '& > *': {
+        margin: theme.spacing(1),
+      },
+    },
   }),
 );
 
@@ -57,6 +72,8 @@ export default function App() {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const handleDrawerToggle = useCallback(() => setDrawerOpen(!drawerOpen), [drawerOpen]);
+  const folderNames = selectedFolderPath.split("/").filter(x => x);
+  const breadCrumbs = folderNames.map((n, i) => [n, `/${folderNames.slice(0, i + 1).join("/")}/`]);
 
   const classes = useStyles();
   return (
@@ -76,6 +93,13 @@ export default function App() {
       </Hidden>
       <Grid container className={classes.content}>
         <Grid item xs={12} md={8} xl={9} className={classes.column}>
+          {breadCrumbs.length > 0 && <Box className={classes.breadCrumbs}>
+            <Breadcrumbs aria-label="breadcrumb">
+              <Typography className={classes.homeIcon}><HomeIcon fontSize="small" /> HSDS</Typography>
+              {breadCrumbs.slice(0, -1).map(([n, p]) => <Link href="#" key={p} onClick={() => setSelectedFolderPath(p)}>{n}</Link>)}
+              <Typography>{breadCrumbs[breadCrumbs.length - 1][0]}</Typography>
+            </Breadcrumbs>
+          </Box>}
           {selectedFolder && selectedFolder.acls && <AccessControl acls={selectedFolder.acls} />}
           {selectedFolder && <FolderContent folder={selectedFolder} handleSelect={setSelectedDomainPath} selected={selectedDomainPath} />}
         </Grid>
