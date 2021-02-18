@@ -29,6 +29,13 @@ const useStyles = makeStyles((theme: Theme) =>
         margin: theme.spacing(1),
       },
     },
+    summary: {
+      margin: 0,
+      '&$expanded': {
+        margin: 0
+      }
+    },
+    expanded: {},
     allowed: {
       color: green[500]
     },
@@ -49,7 +56,7 @@ export default function AccessControl({ acls }: Props) {
 
   return (
     <Accordion>
-      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+      <AccordionSummary expandIcon={<ExpandMoreIcon />} classes={{content: classes.summary, expanded: classes.expanded}}>
         <Typography variant="subtitle2" className={classes.title}><LockIcon />Access Control</Typography>
       </AccordionSummary>
       <AccordionDetails>

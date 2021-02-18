@@ -1,5 +1,6 @@
 import os
-from datetime import datetime
+from functools import reduce
+from math import ceil
 from typing import Any, Dict, List, Union
 
 from flask import Flask, abort, json, send_from_directory
@@ -75,16 +76,25 @@ def get_folder(path: str) -> List[Dict[str, Any]]:
     return json.dumps(result)
 
 
+def calculate_chunks(shape: tuple, chunks: tuple):
+    if not shape or not chunks:
+        return 0
+    chunks_per_dimension = [s / c for s, c in zip(shape, chunks)]
+    return ceil(reduce(lambda x, y: x * y, chunks_per_dimension))
+
+
 def get_group_info(group: Union[Group, Dataset]) -> Dict[str, Any]:
     info = {"name": group.name, "type": "Unknown"}
     if isinstance(group, Group):
         info["type"] = "Group"
     elif isinstance(group, Dataset):
         info["type"] = "Dataset"
-        info["size"] = group.allocated_size
-        info["dimensions"] = group.ndim
-        info["chunks"] = group.num_chunks
-        info["datatype"] = group.dtype.str
+        info["size"] = int(group.size * group.dtype.itemsize)
+        info["shape"] = group.shape
+        info["chunks"] = calculate_chunks(group.shape, group.chunks)
+        info["chunk_shape"] = group.chunks
+        info["datatype_name"] = group.dtype.name
+        info["datatype_kind"] = group.dtype.kind
     return info
 
 
