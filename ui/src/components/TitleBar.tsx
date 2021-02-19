@@ -12,19 +12,12 @@ import StorageIcon from '@material-ui/icons/Storage';
 import React from "react";
 import useSWR from 'swr';
 import { ServerInfo } from "../Api";
+import AlignIcon from "./AlignIcon";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     titleBar: {
       zIndex: theme.zIndex.drawer + 1,
-    },
-    title: {
-      display: 'flex',
-      alignItems: 'center',
-      flexWrap: 'wrap',
-      '& > *': {
-        margin: theme.spacing(1),
-      },
     },
     grow: {
       flexGrow: 1,
@@ -64,29 +57,29 @@ export default function TitleBar({ toggleMenu }: Props) {
       <Hidden lgUp implementation="css">
         <Toolbar className={classes.toolbarSmall}>
           <IconButton color="inherit" edge="start" onClick={toggleMenu}>
-            <Typography variant="h6" className={classes.title}>
-              <MenuIcon />Folders
+            <Typography variant="h6">
+              <AlignIcon><MenuIcon />Folders</AlignIcon>
             </Typography>
           </IconButton>
           <div className={classes.grow} />
-          <Typography variant="h6" className={classes.title} noWrap>
+          <Typography variant="h6" noWrap>
             {info.endpoint}
           </Typography>
         </Toolbar>
       </Hidden>
       <Hidden mdDown implementation="css">
         <Toolbar className={classes.toolbarLarge}>
-          <Typography variant="h6" className={classes.title} noWrap>
-            <StorageIcon />{info.endpoint}
+          <Typography variant="h6" noWrap>
+            <AlignIcon><StorageIcon />{info.endpoint}</AlignIcon>
           </Typography>
-          <Typography variant="h6" className={classes.title}>
-            <NetworkCheckIcon />{info.state}
+          <Typography variant="h6">
+            <AlignIcon><NetworkCheckIcon />{info.state}</AlignIcon>
           </Typography>
-          <Typography variant="h6" className={classes.title}>
-            <ComputerIcon />{info.node_count} nodes
+          <Typography variant="h6">
+            <AlignIcon><ComputerIcon />{info.node_count} nodes</AlignIcon>
           </Typography>
-          <Typography variant="h6" className={classes.title}>
-            <InfoIcon />v{info.hsds_version}
+          <Typography variant="h6">
+            <AlignIcon><InfoIcon />v{info.hsds_version}</AlignIcon>
           </Typography>
         </Toolbar>
       </Hidden>

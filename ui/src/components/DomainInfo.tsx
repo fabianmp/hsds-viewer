@@ -15,6 +15,7 @@ import VerifiedUserIcon from '@material-ui/icons/VerifiedUser';
 import prettyBytes from 'pretty-bytes';
 import React from "react";
 import { Domain, GroupType } from "../Api";
+import AccessControl from "./AccessControl";
 import DataSetInfo from "./DataSetInfo";
 import GroupInfo from "./GroupInfo";
 
@@ -52,6 +53,7 @@ export default function DomainInfo({ domain }: Props) {
       <CardHeader title={domain.filename} subheader={`${domain.domain}/`} titleTypographyProps={{ variant: 'body1' }}
         subheaderTypographyProps={{ variant: 'body2' }} className={classes.header} />
       <CardContent className={classes.content}>
+        <AccessControl variant="small" acls={domain.acls} />
         <Box className={classes.metadata}>
           <Tooltip title="MD5">
             <Chip icon={<VerifiedUserIcon />} label={domain.md5_sum} variant="outlined" size="small" />

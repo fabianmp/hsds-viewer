@@ -99,6 +99,7 @@ def get_attributes(group: Union[Group, Dataset]):
         attrs.append(attr)
     return attrs
 
+
 def get_group_info(group: Union[Group, Dataset]) -> Dict[str, Any]:
     info = {
         "name": group.name,
@@ -122,7 +123,7 @@ def get_group_info(group: Union[Group, Dataset]) -> Dict[str, Any]:
 def get_domain(path: str) -> Dict[str, Any]:
     try:
         with File(f"/{path}", "r") as file:
-            groups = []
+            groups = [get_group_info(file)]
             info = {
                 "acls": file.getACLs(),
                 "domain": os.path.dirname(file.filename),

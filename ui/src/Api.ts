@@ -50,6 +50,7 @@ export interface GroupType {
 }
 
 export interface Domain {
+  acls: ACL[]
   domain: string
   filename: string
   md5_sum: string

@@ -7,16 +7,17 @@ import Hidden from '@material-ui/core/Hidden';
 import Link from '@material-ui/core/Link';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
+import HomeIcon from '@material-ui/icons/Home';
 import clsx from 'clsx';
 import React, { useCallback, useState } from 'react';
 import useSWR from 'swr';
 import { Domain, Folder } from './Api';
 import AccessControl from './components/AccessControl';
+import AlignIcon from './components/AlignIcon';
 import DomainInfo from './components/DomainInfo';
 import FolderContent from './components/FolderContent';
 import FolderTree from './components/FolderTree';
 import TitleBar from './components/TitleBar';
-import HomeIcon from '@material-ui/icons/Home';
 
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -51,14 +52,6 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     breadCrumbs: {
       padding: theme.spacing(1),
-    },
-    homeIcon: {
-      display: 'flex',
-      alignItems: 'center',
-      flexWrap: 'wrap',
-      '& > *': {
-        margin: theme.spacing(1),
-      },
     },
   }),
 );
@@ -95,12 +88,12 @@ export default function App() {
         <Grid item xs={12} md={8} xl={9} className={classes.column}>
           {breadCrumbs.length > 0 && <Box className={classes.breadCrumbs}>
             <Breadcrumbs aria-label="breadcrumb">
-              <Typography className={classes.homeIcon}><HomeIcon fontSize="small" /> HSDS</Typography>
+              <Typography><AlignIcon><HomeIcon fontSize="small" />HSDS</AlignIcon></Typography>
               {breadCrumbs.slice(0, -1).map(([n, p]) => <Link href="#" key={p} onClick={() => setSelectedFolderPath(p)}>{n}</Link>)}
               <Typography>{breadCrumbs[breadCrumbs.length - 1][0]}</Typography>
             </Breadcrumbs>
           </Box>}
-          {selectedFolder && selectedFolder.acls && <AccessControl acls={selectedFolder.acls} />}
+          {selectedFolder && selectedFolder.acls && <AccessControl acls={selectedFolder.acls} variant="wide" />}
           {selectedFolder && <FolderContent folder={selectedFolder} handleSelect={setSelectedDomainPath} selected={selectedDomainPath} />}
         </Grid>
         {selectedDomain && <Grid item xs={12} md={4} xl={3} className={classes.column}>

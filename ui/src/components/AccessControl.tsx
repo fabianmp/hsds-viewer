@@ -4,31 +4,31 @@ import Accordion from '@material-ui/core/Accordion';
 import AccordionDetails from '@material-ui/core/AccordionDetails';
 import AccordionSummary from '@material-ui/core/AccordionSummary';
 import { green, red } from '@material-ui/core/colors';
-import Paper from "@material-ui/core/Paper";
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
 import TableCell from "@material-ui/core/TableCell";
 import TableContainer from "@material-ui/core/TableContainer";
 import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
+import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
+import AddIcon from '@material-ui/icons/Add';
 import CheckIcon from '@material-ui/icons/Check';
 import ClearIcon from '@material-ui/icons/Clear';
+import DeleteIcon from '@material-ui/icons/Delete';
+import EditIcon from '@material-ui/icons/Edit';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import GroupIcon from '@material-ui/icons/Group';
+import GroupAddIcon from '@material-ui/icons/GroupAdd';
 import LockIcon from '@material-ui/icons/Lock';
-import React from "react";
+import PersonIcon from '@material-ui/icons/Person';
+import SearchIcon from '@material-ui/icons/Search';
+import React, { ReactElement } from "react";
 import { ACL } from '../Api';
+import AlignIcon from './AlignIcon';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
-    title: {
-      display: 'flex',
-      alignItems: 'center',
-      flexWrap: 'wrap',
-      '& > *': {
-        margin: theme.spacing(1),
-      },
-    },
     summary: {
       margin: 0,
       '&$expanded': {
@@ -47,41 +47,50 @@ const useStyles = makeStyles((theme: Theme) =>
 
 interface Props {
   acls: ACL[]
+  variant: "small" | "wide"
 }
 
-export default function AccessControl({ acls }: Props) {
+
+
+export default function AccessControl({ acls, variant }: Props) {
   const classes = useStyles();
   const allowed = <CheckIcon fontSize="small" className={classes.allowed} />;
   const denied = <ClearIcon fontSize="small" className={classes.denied} />;
 
+  const wrapTitle = (icon: ReactElement, label: string) => {
+    return variant === "wide"
+      ? <AlignIcon>{icon}<b>{label}</b></AlignIcon>
+      : <Tooltip title={label}>{icon}</Tooltip>
+  }
+
   return (
     <Accordion>
-      <AccordionSummary expandIcon={<ExpandMoreIcon />} classes={{content: classes.summary, expanded: classes.expanded}}>
-        <Typography variant="subtitle2" className={classes.title}><LockIcon />Access Control</Typography>
+      <AccordionSummary expandIcon={<ExpandMoreIcon />} classes={{ content: classes.summary, expanded: classes.expanded }}>
+        <Typography variant="subtitle2"><AlignIcon><LockIcon />Access Control</AlignIcon></Typography>
       </AccordionSummary>
       <AccordionDetails>
-        <TableContainer component={Paper}>
+        <TableContainer>
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell><b>User</b></TableCell>
-                <TableCell><b>Create</b></TableCell>
-                <TableCell><b>Read</b></TableCell>
-                <TableCell><b>Update</b></TableCell>
-                <TableCell><b>Delete</b></TableCell>
-                <TableCell><b>Read ACL</b></TableCell>
-                <TableCell><b>Update ACL</b></TableCell>
+                <TableCell align="center" padding="none">{wrapTitle(<PersonIcon fontSize="small" />, "User")}</TableCell>
+                <TableCell align="center" padding="none">{wrapTitle(<AddIcon fontSize="small" />, "Create")}</TableCell>
+                <TableCell align="center" padding="none">{wrapTitle(<SearchIcon fontSize="small" />, "Read")}</TableCell>
+                <TableCell align="center" padding="none">{wrapTitle(<EditIcon fontSize="small" />, "Update")}</TableCell>
+                <TableCell align="center" padding="none">{wrapTitle(<DeleteIcon fontSize="small" />, "Delete")}</TableCell>
+                <TableCell align="center" padding="none">{wrapTitle(<GroupIcon fontSize="small" />, "Read ACL")}</TableCell>
+                <TableCell align="center" padding="none">{wrapTitle(<GroupAddIcon fontSize="small" />, "Update ACL")}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {acls.map((acl: ACL) => <TableRow key={acl.userName} hover>
-                <TableCell component="th" scope="row">{acl.userName}</TableCell>
-                <TableCell>{acl.create ? allowed : denied}</TableCell>
-                <TableCell>{acl.read ? allowed : denied}</TableCell>
-                <TableCell>{acl.update ? allowed : denied}</TableCell>
-                <TableCell>{acl.delete ? allowed : denied}</TableCell>
-                <TableCell>{acl.readACL ? allowed : denied}</TableCell>
-                <TableCell>{acl.updateACL ? allowed : denied}</TableCell>
+                <TableCell component="th" scope="row" align="center" padding="none">{acl.userName}</TableCell>
+                <TableCell align="center" padding="none">{acl.create ? allowed : denied}</TableCell>
+                <TableCell align="center" padding="none">{acl.read ? allowed : denied}</TableCell>
+                <TableCell align="center" padding="none">{acl.update ? allowed : denied}</TableCell>
+                <TableCell align="center" padding="none">{acl.delete ? allowed : denied}</TableCell>
+                <TableCell align="center" padding="none">{acl.readACL ? allowed : denied}</TableCell>
+                <TableCell align="center" padding="none">{acl.updateACL ? allowed : denied}</TableCell>
               </TableRow>)}
             </TableBody>
           </Table>
