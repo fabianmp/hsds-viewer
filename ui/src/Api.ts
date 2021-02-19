@@ -32,9 +32,15 @@ export interface Folder {
   domains: NodeInfo[]
 }
 
+export interface Attribute {
+  name: string
+  value: string
+}
+
 export interface GroupType {
   name: string
   type: string
+  attributes: Attribute[]
   size?: number
   shape?: number[]
   chunks?: number

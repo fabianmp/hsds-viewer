@@ -21,6 +21,7 @@ import SettingsEthernetIcon from '@material-ui/icons/SettingsEthernet';
 import prettyBytes from 'pretty-bytes';
 import React, { useState } from "react";
 import { GroupType } from "../Api";
+import Attributes from "./Attributes";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -113,6 +114,9 @@ export default function DataSetInfo({ group }: Props) {
               </Tooltip>
             </Box>
           </CardContent>
+          {group.attributes.length > 0 && <CardContent className={classes.content}>
+            <Attributes attributes={group.attributes} />
+          </CardContent>}
         </Card>
       </Popover>
     </>

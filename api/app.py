@@ -3,6 +3,7 @@ from functools import reduce
 from math import ceil
 from typing import Any, Dict, List, Union
 
+import numpy as np
 from flask import Flask, abort, json, send_from_directory
 from h5pyd import Dataset, File, Folder, Group, getServerInfo
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -83,8 +84,27 @@ def calculate_chunks(shape: tuple, chunks: tuple):
     return ceil(reduce(lambda x, y: x * y, chunks_per_dimension))
 
 
+def get_attributes(group: Union[Group, Dataset]):
+    attrs = []
+    for key, value in group.attrs.items():
+        attr = {
+            "name": key,
+        }
+        if isinstance(value, str):
+            attr["value"] = value
+        elif isinstance(value, (np.ndarray, np.integer, np.floating)):
+            attr["value"] = str(value)
+        else:
+            attr["value"] = f"<unknown> {str(type(value))}"
+        attrs.append(attr)
+    return attrs
+
 def get_group_info(group: Union[Group, Dataset]) -> Dict[str, Any]:
-    info = {"name": group.name, "type": "Unknown"}
+    info = {
+        "name": group.name,
+        "type": "Unknown",
+        "attributes": get_attributes(group),
+    }
     if isinstance(group, Group):
         info["type"] = "Group"
     elif isinstance(group, Dataset):
