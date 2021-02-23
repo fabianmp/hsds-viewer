@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Union
 
 import numpy as np
 from flask import Flask, abort, json, send_from_directory
-from h5pyd import Dataset, File, Folder, Group, getServerInfo
+from h5pyd import Config, Dataset, File, Folder, Group, getServerInfo
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from authentication import configure_authentication
@@ -30,7 +30,17 @@ def convert_timestamp(timestamp: float) -> int:
 
 @app.route("/api/info")
 def info() -> Dict[str, Any]:
-    return getServerInfo()
+    try:
+        return getServerInfo()
+    except Exception as e:
+        print(e)
+        config = Config()
+        return {
+            "endpoint": config["hs_endpoint"],
+            "state": "ERROR",
+            "node_count": 0,
+            "hsds_version": "<unknown>",
+        }
 
 
 @app.route("/api/folder/", defaults={"path": ""})
