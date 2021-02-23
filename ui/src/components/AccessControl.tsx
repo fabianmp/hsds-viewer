@@ -50,9 +50,7 @@ interface Props {
   variant: "small" | "wide"
 }
 
-
-
-export default function AccessControl({ acls, variant }: Props) {
+export function AccessControlTable({ acls, variant }: Props) {
   const classes = useStyles();
   const allowed = <CheckIcon fontSize="small" className={classes.allowed} />;
   const denied = <ClearIcon fontSize="small" className={classes.denied} />;
@@ -64,37 +62,45 @@ export default function AccessControl({ acls, variant }: Props) {
   }
 
   return (
+    <TableContainer>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell align="center" padding="none">{wrapTitle(<PersonIcon fontSize="small" />, "User")}</TableCell>
+            <TableCell align="center" padding="none">{wrapTitle(<AddIcon fontSize="small" />, "Create")}</TableCell>
+            <TableCell align="center" padding="none">{wrapTitle(<SearchIcon fontSize="small" />, "Read")}</TableCell>
+            <TableCell align="center" padding="none">{wrapTitle(<EditIcon fontSize="small" />, "Update")}</TableCell>
+            <TableCell align="center" padding="none">{wrapTitle(<DeleteIcon fontSize="small" />, "Delete")}</TableCell>
+            <TableCell align="center" padding="none">{wrapTitle(<GroupIcon fontSize="small" />, "Read ACL")}</TableCell>
+            <TableCell align="center" padding="none">{wrapTitle(<GroupAddIcon fontSize="small" />, "Update ACL")}</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {acls.map((acl: ACL) => <TableRow key={acl.userName} hover>
+            <TableCell component="th" scope="row" align="center" padding="none">{acl.userName}</TableCell>
+            <TableCell align="center" padding="none">{acl.create ? allowed : denied}</TableCell>
+            <TableCell align="center" padding="none">{acl.read ? allowed : denied}</TableCell>
+            <TableCell align="center" padding="none">{acl.update ? allowed : denied}</TableCell>
+            <TableCell align="center" padding="none">{acl.delete ? allowed : denied}</TableCell>
+            <TableCell align="center" padding="none">{acl.readACL ? allowed : denied}</TableCell>
+            <TableCell align="center" padding="none">{acl.updateACL ? allowed : denied}</TableCell>
+          </TableRow>)}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+}
+
+export default function AccessControl({ acls }: Props) {
+  const classes = useStyles();
+
+  return (
     <Accordion>
       <AccordionSummary expandIcon={<ExpandMoreIcon />} classes={{ content: classes.summary, expanded: classes.expanded }}>
         <Typography variant="subtitle2"><AlignIcon><LockIcon />Access Control</AlignIcon></Typography>
       </AccordionSummary>
       <AccordionDetails>
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell align="center" padding="none">{wrapTitle(<PersonIcon fontSize="small" />, "User")}</TableCell>
-                <TableCell align="center" padding="none">{wrapTitle(<AddIcon fontSize="small" />, "Create")}</TableCell>
-                <TableCell align="center" padding="none">{wrapTitle(<SearchIcon fontSize="small" />, "Read")}</TableCell>
-                <TableCell align="center" padding="none">{wrapTitle(<EditIcon fontSize="small" />, "Update")}</TableCell>
-                <TableCell align="center" padding="none">{wrapTitle(<DeleteIcon fontSize="small" />, "Delete")}</TableCell>
-                <TableCell align="center" padding="none">{wrapTitle(<GroupIcon fontSize="small" />, "Read ACL")}</TableCell>
-                <TableCell align="center" padding="none">{wrapTitle(<GroupAddIcon fontSize="small" />, "Update ACL")}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {acls.map((acl: ACL) => <TableRow key={acl.userName} hover>
-                <TableCell component="th" scope="row" align="center" padding="none">{acl.userName}</TableCell>
-                <TableCell align="center" padding="none">{acl.create ? allowed : denied}</TableCell>
-                <TableCell align="center" padding="none">{acl.read ? allowed : denied}</TableCell>
-                <TableCell align="center" padding="none">{acl.update ? allowed : denied}</TableCell>
-                <TableCell align="center" padding="none">{acl.delete ? allowed : denied}</TableCell>
-                <TableCell align="center" padding="none">{acl.readACL ? allowed : denied}</TableCell>
-                <TableCell align="center" padding="none">{acl.updateACL ? allowed : denied}</TableCell>
-              </TableRow>)}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <AccessControlTable variant="wide" acls={acls} />
       </AccordionDetails>
     </Accordion>
   );

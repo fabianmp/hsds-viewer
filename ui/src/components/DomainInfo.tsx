@@ -3,19 +3,22 @@ import Card from "@material-ui/core/Card";
 import CardContent from "@material-ui/core/CardContent";
 import CardHeader from "@material-ui/core/CardHeader";
 import Chip from "@material-ui/core/Chip";
+import Collapse from "@material-ui/core/Collapse";
+import IconButton from "@material-ui/core/IconButton";
 import List from '@material-ui/core/List';
 import ListSubheader from "@material-ui/core/ListSubheader";
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import Tooltip from "@material-ui/core/Tooltip";
 import AccessTimeIcon from '@material-ui/icons/AccessTime';
 import ArchiveIcon from '@material-ui/icons/Archive';
+import InfoIcon from '@material-ui/icons/Info';
 import PersonIcon from '@material-ui/icons/Person';
 import UpdateIcon from '@material-ui/icons/Update';
 import VerifiedUserIcon from '@material-ui/icons/VerifiedUser';
 import prettyBytes from 'pretty-bytes';
-import React from "react";
+import React, { useState } from "react";
 import { Domain, GroupType } from "../Api";
-import AccessControl from "./AccessControl";
+import { AccessControlTable } from "./AccessControl";
 import DataSetInfo from "./DataSetInfo";
 import GroupInfo from "./GroupInfo";
 
@@ -27,6 +30,12 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     content: {
       paddingTop: 0,
+      '& > *': {
+        marginTop: theme.spacing(1),
+      },
+    },
+    info: {
+      display: 'block',
     },
     metadata: {
       display: 'flex',
@@ -48,29 +57,36 @@ interface Props {
 
 export default function DomainInfo({ domain }: Props) {
   const classes = useStyles();
+  const [showMetadata, setShowMetadata] = useState(false);
+
   return (
-    <Card>
+    <Card style={{ maxHeight: '90vh', overflow: 'auto' }}>
       <CardHeader title={domain.filename} subheader={`${domain.domain}/`} titleTypographyProps={{ variant: 'body1' }}
-        subheaderTypographyProps={{ variant: 'body2' }} className={classes.header} />
+        subheaderTypographyProps={{ variant: 'body2' }} className={classes.header}
+        action={<Tooltip title="Show metadata">
+          <IconButton onClick={() => setShowMetadata((s: boolean) => !s)}><InfoIcon /></IconButton>
+        </Tooltip>} />
       <CardContent className={classes.content}>
-        <AccessControl variant="small" acls={domain.acls} />
-        <Box className={classes.metadata}>
-          <Tooltip title="MD5">
-            <Chip icon={<VerifiedUserIcon />} label={domain.md5_sum} variant="outlined" size="small" />
-          </Tooltip>
-          <Tooltip title="Owner">
-            <Chip icon={<PersonIcon />} label={domain.owner} variant="outlined" size="small" />
-          </Tooltip>
-          <Tooltip title="Created">
-            <Chip icon={<AccessTimeIcon />} label={new Date(domain.created).toLocaleString()} variant="outlined" size="small" />
-          </Tooltip>
-          <Tooltip title="Modified">
-            <Chip icon={<UpdateIcon />} label={new Date(domain.modified).toLocaleString()} variant="outlined" size="small" />
-          </Tooltip>
-          <Tooltip title="Size">
-            <Chip icon={<ArchiveIcon />} label={prettyBytes(domain.total_size)} variant="outlined" size="small" />
-          </Tooltip>
-        </Box>
+        <Collapse in={showMetadata}>
+          <Box className={classes.metadata}>
+            <Tooltip title="MD5">
+              <Chip icon={<VerifiedUserIcon />} label={domain.md5_sum} variant="outlined" size="small" />
+            </Tooltip>
+            <Tooltip title="Owner">
+              <Chip icon={<PersonIcon />} label={domain.owner} variant="outlined" size="small" />
+            </Tooltip>
+            <Tooltip title="Created">
+              <Chip icon={<AccessTimeIcon />} label={new Date(domain.created).toLocaleString()} variant="outlined" size="small" />
+            </Tooltip>
+            <Tooltip title="Modified">
+              <Chip icon={<UpdateIcon />} label={new Date(domain.modified).toLocaleString()} variant="outlined" size="small" />
+            </Tooltip>
+            <Tooltip title="Size">
+              <Chip icon={<ArchiveIcon />} label={prettyBytes(domain.total_size)} variant="outlined" size="small" />
+            </Tooltip>
+          </Box>
+          <AccessControlTable variant="small" acls={domain.acls} />
+        </Collapse>
         <List dense disablePadding subheader={<ListSubheader disableGutters className={classes.groupHeader}><b>Groups</b></ListSubheader>}>
           {domain.groups.map((group: GroupType) => group.type === 'Group'
             ? <GroupInfo group={group} key={group.name} />
