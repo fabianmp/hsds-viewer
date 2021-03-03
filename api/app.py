@@ -1,4 +1,5 @@
 import os
+import secrets
 from functools import reduce
 from math import ceil
 from typing import Any, Dict, List, Union
@@ -11,6 +12,9 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from authentication import configure_authentication
 
 app = Flask(__name__, static_url_path="/")
+app.secret_key = os.environ.get("SECRET_KEY")
+if app.secret_key is None:
+    app.secret_key = secrets.token_urlsafe()
 configure_authentication(app)
 
 

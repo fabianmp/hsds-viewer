@@ -15,10 +15,6 @@ def configure_authentication(app):
     if not all(oidc_settings):
         raise Exception("Invalid OIDC configuration")
 
-    app.secret_key = os.environ.get("SECRET_KEY")
-    if app.secret_key is None:
-        import secrets
-        app.secret_key = secrets.token_urlsafe()
     app.config.update({
         "OIDC_CLIENT_ID": oidc_client_id,
         "OIDC_CLIENT_SECRET": oidc_client_secret
