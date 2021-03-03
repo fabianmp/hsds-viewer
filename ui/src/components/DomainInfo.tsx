@@ -4,13 +4,16 @@ import CardContent from "@material-ui/core/CardContent";
 import CardHeader from "@material-ui/core/CardHeader";
 import Chip from "@material-ui/core/Chip";
 import Collapse from "@material-ui/core/Collapse";
+import { red } from '@material-ui/core/colors';
 import IconButton from "@material-ui/core/IconButton";
 import List from '@material-ui/core/List';
 import ListSubheader from "@material-ui/core/ListSubheader";
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import Tooltip from "@material-ui/core/Tooltip";
+import Typography from "@material-ui/core/Typography";
 import AccessTimeIcon from '@material-ui/icons/AccessTime';
 import ArchiveIcon from '@material-ui/icons/Archive';
+import BlockIcon from '@material-ui/icons/Block';
 import InfoIcon from '@material-ui/icons/Info';
 import PersonIcon from '@material-ui/icons/Person';
 import UpdateIcon from '@material-ui/icons/Update';
@@ -19,6 +22,7 @@ import prettyBytes from 'pretty-bytes';
 import React, { useState } from "react";
 import { Domain, GroupType } from "../Api";
 import { AccessControlTable } from "./AccessControl";
+import AlignIcon from "./AlignIcon";
 import DataSetInfo from "./DataSetInfo";
 import GroupInfo from "./GroupInfo";
 
@@ -44,6 +48,9 @@ const useStyles = makeStyles((theme: Theme) =>
       '& > *': {
         margin: theme.spacing(0.5),
       },
+    },
+    center: {
+      textAlign: 'center',
     },
     groupHeader: {
       lineHeight: 2,
@@ -92,6 +99,12 @@ export default function DomainInfo({ domain }: Props) {
             ? <GroupInfo group={group} key={group.name} />
             : <DataSetInfo group={group} key={group.name} />)}
         </List>
+        {domain.acls.length === 0 && <Box className={classes.center}>
+          <AlignIcon>
+            <BlockIcon fontSize="large" style={{ color: red[500] }} />
+            <Typography variant="h5">Unauthorized</Typography>
+          </AlignIcon>
+        </Box>}
       </CardContent>
     </Card>
   );

@@ -3,6 +3,7 @@ export interface ServerInfo {
   state: string
   node_count: number
   hsds_version: string
+  username: string
 }
 
 export interface NodeInfo {

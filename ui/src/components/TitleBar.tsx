@@ -10,9 +10,9 @@ import MenuIcon from '@material-ui/icons/Menu';
 import NetworkCheckIcon from '@material-ui/icons/NetworkCheck';
 import StorageIcon from '@material-ui/icons/Storage';
 import React from "react";
-import useSWR from 'swr';
 import { ServerInfo } from "../Api";
 import AlignIcon from "./AlignIcon";
+import UserMenu from "./UserMenu";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -41,16 +41,10 @@ const useStyles = makeStyles((theme: Theme) =>
 
 interface Props {
   toggleMenu: () => void
+  info: ServerInfo
 }
 
-export default function TitleBar({ toggleMenu }: Props) {
-  const { data: info = {
-    endpoint: "",
-    state: "LOADING",
-    node_count: 0,
-    hsds_version: "?"
-  } } = useSWR<ServerInfo>("/api/info");
-
+export default function TitleBar({ toggleMenu, info }: Props) {
   const classes = useStyles();
   return (
     <AppBar position="fixed" className={classes.titleBar}>
@@ -61,10 +55,13 @@ export default function TitleBar({ toggleMenu }: Props) {
               <AlignIcon><MenuIcon />Folders</AlignIcon>
             </Typography>
           </IconButton>
+          <Hidden xsDown>
+            <Typography variant="h6" noWrap>
+              {info.endpoint}
+            </Typography>
+          </Hidden>
           <div className={classes.grow} />
-          <Typography variant="h6" noWrap>
-            {info.endpoint}
-          </Typography>
+          <UserMenu username={info.username} />
         </Toolbar>
       </Hidden>
       <Hidden mdDown implementation="css">
@@ -81,6 +78,8 @@ export default function TitleBar({ toggleMenu }: Props) {
           <Typography variant="h6">
             <AlignIcon><InfoIcon />v{info.hsds_version}</AlignIcon>
           </Typography>
+          <div className={classes.grow} />
+          <UserMenu username={info.username} />
         </Toolbar>
       </Hidden>
     </AppBar>

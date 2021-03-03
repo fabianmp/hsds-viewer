@@ -9,9 +9,9 @@ import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import HomeIcon from '@material-ui/icons/Home';
 import clsx from 'clsx';
-import React, { useCallback, useState } from 'react';
-import useSWR from 'swr';
-import { Domain, Folder } from './Api';
+import React, { useCallback, useEffect, useState } from 'react';
+import useSWR, { mutate } from 'swr';
+import { Domain, Folder, ServerInfo } from './Api';
 import AccessControl from './components/AccessControl';
 import AlignIcon from './components/AlignIcon';
 import DomainInfo from './components/DomainInfo';
@@ -59,10 +59,22 @@ const useStyles = makeStyles((theme: Theme) =>
 export default function App() {
   const [selectedFolderPath, setSelectedFolderPath] = useState<string>("");
   const [selectedDomainPath, setSelectedDomainPath] = useState<string>("");
-  const { data: folder = undefined } = useSWR<Folder>('/api/folder/');
+  const { data: rootFolder = undefined } = useSWR<Folder>('/api/folder/');
   const { data: selectedFolder = null } = useSWR<Folder>(selectedFolderPath ? `/api/folder${selectedFolderPath}/` : null)
   const { data: selectedDomain = null } = useSWR<Domain>(selectedDomainPath ? `/api/domain${selectedDomainPath}` : null)
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const { data: info = {
+    endpoint: "",
+    state: "LOADING",
+    node_count: 0,
+    hsds_version: "?",
+    username: "<unknown>"
+  } } = useSWR<ServerInfo>("/api/info");
+
+  useEffect(() => {
+    mutate(`/api/folder${selectedFolderPath}/`);
+    mutate(`/api/domain${selectedDomainPath}`);
+  }, [info.username, selectedFolderPath, selectedDomainPath])
 
   const handleDrawerToggle = useCallback(() => setDrawerOpen(!drawerOpen), [drawerOpen]);
   const folderNames = selectedFolderPath.split("/").filter(x => x);
@@ -72,16 +84,16 @@ export default function App() {
   return (
     <Box display="flex">
       <CssBaseline />
-      <TitleBar toggleMenu={handleDrawerToggle} />
+      <TitleBar toggleMenu={handleDrawerToggle} info={info} />
       <Hidden lgUp implementation="css">
         <Drawer variant="temporary" className={classes.drawerSmall} classes={{ paper: clsx(classes.drawerSmall, classes.drawerPaperSmall) }}
           open={drawerOpen} onClose={handleDrawerToggle}>
-          {folder && <FolderTree folder={folder} handleNodeSelect={setSelectedFolderPath} />}
+          {rootFolder && <FolderTree folder={rootFolder} handleNodeSelect={setSelectedFolderPath} />}
         </Drawer>
       </Hidden>
       <Hidden mdDown implementation="css">
         <Drawer variant="permanent" className={classes.drawerLarge} classes={{ paper: clsx(classes.drawerLarge, classes.drawerPaperLarge) }} open>
-          {folder && <FolderTree folder={folder} handleNodeSelect={setSelectedFolderPath} />}
+          {rootFolder && <FolderTree folder={rootFolder} handleNodeSelect={setSelectedFolderPath} />}
         </Drawer>
       </Hidden>
       <Grid container className={classes.content}>
@@ -93,7 +105,7 @@ export default function App() {
               <Typography>{breadCrumbs[breadCrumbs.length - 1][0]}</Typography>
             </Breadcrumbs>
           </Box>}
-          {selectedFolder && selectedFolder.acls && <AccessControl acls={selectedFolder.acls} variant="wide" />}
+          {selectedFolder && selectedFolder.acls.length > 0 && <AccessControl acls={selectedFolder.acls} variant="wide" />}
           {selectedFolder && <FolderContent folder={selectedFolder} handleSelect={setSelectedDomainPath} selected={selectedDomainPath} />}
         </Grid>
         {selectedDomain && <Grid item xs={12} md={4} xl={3} className={classes.column}>

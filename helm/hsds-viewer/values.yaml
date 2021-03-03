@@ -16,8 +16,10 @@ fullnameOverride: ""
 
 hsds:
   endpoint: ""
-  username: ""
-  password: ""
+  defaultUser: ""
+  credentials: {}
+    # user1: password1
+    # user2: password2
 
 oidc:
   enabled: false
