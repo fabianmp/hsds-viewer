@@ -15,33 +15,32 @@ def configure_authentication(app):
     if not all(oidc_settings):
         raise Exception("Invalid OIDC configuration")
 
-    app.config.update({
-        "OIDC_CLIENT_ID": oidc_client_id,
-        "OIDC_CLIENT_SECRET": oidc_client_secret
-    })
+    app.config.update(
+        {"OIDC_CLIENT_ID": oidc_client_id, "OIDC_CLIENT_SECRET": oidc_client_secret}
+    )
     if not oidc_endpoint.endswith("/"):
         oidc_endpoint += "/"
     oauth = OAuth(app)
     oauth.register(
         name="oidc",
         server_metadata_url=f"{oidc_endpoint}.well-known/openid-configuration",
-        client_kwargs={
-            "scope": "openid"
-        }
+        client_kwargs={"scope": "openid"},
     )
 
     excluded_urls = (
-        '/auth',
-        '/healthz',
+        "/auth",
+        "/healthz",
     )
 
     @app.before_request
     def require_login():
         if "user" not in session and request.path not in excluded_urls:
-            return oauth.oidc.authorize_redirect(url_for('auth', _external=True, redirect_path=request.full_path))
+            return oauth.oidc.authorize_redirect(
+                url_for("auth", _external=True, redirect_path=request.full_path)
+            )
 
-    @app.route('/auth')
+    @app.route("/auth")
     def auth():
         token = oauth.oidc.authorize_access_token()
-        session['user'] = oauth.oidc.parse_id_token(token)
+        session["user"] = oauth.oidc.parse_id_token(token)
         return redirect(request.args.get("redirect_path", "/"))
