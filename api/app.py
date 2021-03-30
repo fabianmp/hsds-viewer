@@ -16,13 +16,26 @@ if app.secret_key is None:
     app.secret_key = secrets.token_urlsafe()
 configure_authentication(app)
 
-with open(os.environ.get("HSDS_CREDENTIALS_FILE", "credentials.json"), "r") as f:
-    credentials = json.load(f)
+credentials_file = os.environ.get("HSDS_CREDENTIALS_FILE", "credentials.json")
+if os.path.isfile(credentials_file):
+    with open(credentials_file, "r") as f:
+        credentials = json.load(f)
+else:
+    credentials = {}
 
 
 def get_credentials() -> Dict[str, str]:
-    username = session.setdefault("hsds_user", os.environ.get("HSDS_DEFAULT_USER", ""))
-    return {"username": username, "password": credentials.get(username, "")}
+    if "username" in session:
+        username = session.setdefault("hsds_user", session["username"])
+    else:
+        username = session.setdefault(
+            "hsds_user", os.environ.get("HSDS_DEFAULT_USER", "")
+        )
+
+    if username == session.get("username"):
+        return {"username": username, "api_key": session["token"]}
+    else:
+        return {"username": username, "password": credentials.get(username, "")}
 
 
 @app.route("/")
@@ -189,13 +202,21 @@ def get_domain(path: str) -> Dict[str, Any]:
 def current_user():
     if request.method == "POST":
         session["hsds_user"] = request.get_json()["name"]
-    session.setdefault("hsds_user", "admin")
+
+    if "username" in session:
+        session.setdefault("hsds_user", session["username"])
+    else:
+        session.setdefault("hsds_user", os.environ.get("HSDS_DEFAULT_USER", "admin"))
+
     return json.dumps({"name": session["hsds_user"]})
 
 
 @app.route("/api/users")
 def get_users():
-    return json.dumps(list(credentials.keys()))
+    users = list(credentials.keys())
+    if "username" in session:
+        users.insert(0, session["username"])
+    return json.dumps(users)
 
 
 if os.environ.get("ENABLE_CORS", False):

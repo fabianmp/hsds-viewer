@@ -34,7 +34,7 @@ def configure_authentication(app):
 
     @app.before_request
     def require_login():
-        if "user" not in session and request.path not in excluded_urls:
+        if "username" not in session and request.path not in excluded_urls:
             return oauth.oidc.authorize_redirect(
                 url_for("auth", _external=True, redirect_path=request.full_path)
             )
@@ -42,5 +42,6 @@ def configure_authentication(app):
     @app.route("/auth")
     def auth():
         token = oauth.oidc.authorize_access_token()
-        session["user"] = oauth.oidc.parse_id_token(token)
+        session["username"] = oauth.oidc.parse_id_token(token)["preferred_username"]
+        session["token"] = token["access_token"]
         return redirect(request.args.get("redirect_path", "/"))
