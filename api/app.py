@@ -7,7 +7,6 @@ from typing import Any, Dict, List, Union
 import numpy as np
 from flask import Flask, abort, json, request, send_from_directory, session
 from h5pyd import Config, Dataset, File, Folder, Group, getServerInfo
-from werkzeug.middleware.proxy_fix import ProxyFix
 
 from authentication import configure_authentication
 
@@ -200,6 +199,7 @@ def get_users():
 
 
 if os.environ.get("USE_PROXY_FIX", False):
+    from werkzeug.middleware.proxy_fix import ProxyFix
     app = ProxyFix(app, x_for=1, x_host=1)
 
 
