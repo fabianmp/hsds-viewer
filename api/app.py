@@ -221,11 +221,13 @@ def get_users():
 
 if os.environ.get("ENABLE_CORS", False):
     from flask_cors import CORS
+
     CORS(app)
 
 
 if os.environ.get("USE_PROXY_FIX", False):
     from werkzeug.middleware.proxy_fix import ProxyFix
+
     app = ProxyFix(app, x_for=1, x_host=1)
 
 
