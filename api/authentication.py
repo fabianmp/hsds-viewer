@@ -34,7 +34,9 @@ def configure_authentication(app):
 
     @app.before_request
     def require_login():
-        if "username" not in session and request.path not in excluded_urls:
+        if request.path in excluded_urls:
+            return
+        if "username" not in session:
             return oauth.oidc.authorize_redirect(
                 url_for("auth", _external=True, redirect_path=request.full_path)
             )
