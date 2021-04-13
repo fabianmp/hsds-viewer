@@ -38,8 +38,8 @@ def get_credentials() -> Dict[str, str]:
             "hsds_user", os.environ.get("HSDS_DEFAULT_USER", "")
         )
 
-    if "token" in session and username == session.get("username"):
-        return {"username": username, "api_key": session["token"]}
+    if "access_token" in session and username == session.get("username"):
+        return {"username": username, "api_key": session["access_token"]}
     else:
         return {"username": username, "password": credentials.get(username, "")}
 

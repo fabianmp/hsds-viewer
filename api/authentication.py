@@ -1,4 +1,5 @@
 import os
+from time import time
 
 from authlib.integrations.flask_client import OAuth
 from flask import redirect, request, session, url_for
@@ -41,9 +42,19 @@ def configure_authentication(app):
                 url_for("auth", _external=True, redirect_path=request.full_path)
             )
 
+        if session["expires_at"] - int(time()) < 0:
+            token = oauth.oidc.fetch_access_token(
+                refresh_token=session["refresh_token"], grant_type="refresh_token"
+            )
+            session["access_token"] = token["access_token"]
+            session["refresh_token"] = token["refresh_token"]
+            session["expires_at"] = token["expires_at"]
+
     @app.route("/auth")
     def auth():
         token = oauth.oidc.authorize_access_token()
         session["username"] = oauth.oidc.parse_id_token(token)["preferred_username"]
-        session["token"] = token["access_token"]
+        session["access_token"] = token["access_token"]
+        session["refresh_token"] = token["refresh_token"]
+        session["expires_at"] = token["expires_at"]
         return redirect(request.args.get("redirect_path", "/"))
