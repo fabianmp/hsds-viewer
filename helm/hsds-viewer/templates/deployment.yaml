@@ -35,10 +35,14 @@ spec:
             {{- end }}
             - name: HS_ENDPOINT
               value: {{ .Values.hsds.endpoint }}
+            {{- if .Values.hsds.defaultUser }}
             - name: HSDS_DEFAULT_USER
               value: {{ .Values.hsds.defaultUser }}
+            {{- end }}
+            {{- if .Values.hsds.credentials }}
             - name: HSDS_CREDENTIALS_FILE
               value: /credentials.json
+            {{- end }}
             {{- if .Values.oidc.enabled }}
             - name: OIDC_ENDPOINT
               value: {{ .Values.oidc.endpoint }}
@@ -50,11 +54,13 @@ spec:
                   name: {{ .Release.Name }}-oidc
                   key: secret
             {{- end }}
+          {{- if .Values.hsds.credentials }}
           volumeMounts:
             - name: credentials
               subPath: credentials.json
               mountPath: /credentials.json
               readOnly: true
+          {{- end }}
           ports:
             - name: http
               containerPort: 80
@@ -69,10 +75,12 @@ spec:
               port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+      {{- if .Values.hsds.credentials }}
       volumes:
         - name: credentials
           secret:
             secretName: {{ .Release.Name }}-credentials
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
