@@ -1,3 +1,4 @@
+import logging
 import os
 import secrets
 from functools import reduce
@@ -9,6 +10,11 @@ from flask import Flask, abort, json, request, send_from_directory, session
 from h5pyd import Config, Dataset, File, Folder, Group, getServerInfo
 
 from authentication import configure_authentication
+
+logging.basicConfig(
+    format=os.environ.get("LOG_FORMAT", "%(asctime)s\t%(levelname)s\t%(message)s"),
+    level=os.environ.get("LOG_LEVEL", "WARN").upper(),
+)
 
 app = Flask(__name__, static_url_path="/")
 app.secret_key = os.environ.get("SECRET_KEY")
