@@ -33,22 +33,33 @@ def configure_authentication(app):
         "/healthz",
     )
 
+    def refresh_token_if_necessary():
+        if session["expires_at"] > int(time()):
+            return
+
+        token = oauth.oidc.fetch_access_token(
+            refresh_token=session["refresh_token"], grant_type="refresh_token"
+        )
+        session["access_token"] = token["access_token"]
+        session["refresh_token"] = token["refresh_token"]
+        session["expires_at"] = token["expires_at"]
+
     @app.before_request
     def require_login():
         if request.path in excluded_urls:
-            return
+            return None
+
         if "username" not in session:
             return oauth.oidc.authorize_redirect(
                 url_for("auth", _external=True, redirect_path=request.full_path)
             )
 
-        if session["expires_at"] - int(time()) < 0:
-            token = oauth.oidc.fetch_access_token(
-                refresh_token=session["refresh_token"], grant_type="refresh_token"
+        try:
+            refresh_token_if_necessary()
+        except:
+            return oauth.oidc.authorize_redirect(
+                url_for("auth", _external=True, redirect_path=request.full_path)
             )
-            session["access_token"] = token["access_token"]
-            session["refresh_token"] = token["refresh_token"]
-            session["expires_at"] = token["expires_at"]
 
     @app.route("/auth")
     def auth():
