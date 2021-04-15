@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Union
 
 import numpy as np
 from flask import Flask, abort, json, request, send_from_directory, session
+from flask_caching import Cache
 from h5pyd import Config, Dataset, File, Folder, Group, getServerInfo
 
 from authentication import configure_authentication
@@ -22,6 +23,8 @@ if app.secret_key is None:
     app.secret_key = secrets.token_urlsafe()
 configure_authentication(app)
 
+cache = Cache(app, config={"CACHE_TYPE": "SimpleCache"})
+
 credentials_file = os.environ.get("HSDS_CREDENTIALS_FILE", "credentials.json")
 if os.path.isfile(credentials_file):
     with open(credentials_file, "r") as f:
@@ -30,13 +33,14 @@ else:
     credentials = {}
 
 
-def get_credentials() -> Dict[str, str]:
+def get_username() -> str:
     if "username" in session:
-        username = session.setdefault("hsds_user", session["username"])
+        return session.setdefault("hsds_user", session["username"])
     else:
-        username = session.setdefault(
-            "hsds_user", os.environ.get("HSDS_DEFAULT_USER", "")
-        )
+        return session.setdefault("hsds_user", os.environ.get("HSDS_DEFAULT_USER", ""))
+
+def get_credentials() -> Dict[str, str]:
+    username = get_username()
 
     if "access_token" in session and username == session.get("username"):
         return {"username": username, "api_key": session["access_token"]}
@@ -74,13 +78,8 @@ def info() -> Dict[str, Any]:
         }
 
 
-@app.route("/api/folder/", defaults={"path": ""})
-@app.route("/api/folder/<path:path>")
-def get_folder(path: str) -> List[Dict[str, Any]]:
-    path = f"/{path}"
-    if not path.endswith("/"):
-        path = f"{path}/"
-
+@cache.memoize(60)
+def get_folder_content_from_hsds(path, username):
     result = {
         "subfolders": [],
         "domains": [],
@@ -112,6 +111,17 @@ def get_folder(path: str) -> List[Dict[str, Any]]:
                     }
                 )
         folder.close()
+    return result
+
+
+@app.route("/api/folder/", defaults={"path": ""})
+@app.route("/api/folder/<path:path>")
+def get_folder(path: str) -> List[Dict[str, Any]]:
+    path = f"/{path}"
+    if not path.endswith("/"):
+        path = f"{path}/"
+
+    result = get_folder_content_from_hsds(path, get_username())
     return json.dumps(result)
 
 
@@ -173,8 +183,8 @@ def get_group_info(group: Union[Group, Dataset]) -> Dict[str, Any]:
     return info
 
 
-@app.route("/api/domain/<path:path>")
-def get_domain(path: str) -> Dict[str, Any]:
+@cache.memoize(60)
+def get_file_content_from_hsds(path, username):
     try:
         with File(f"/{path}", "r", **get_credentials()) as file:
             groups = [get_group_info(file)]
@@ -210,6 +220,11 @@ def get_domain(path: str) -> Dict[str, Any]:
             }
         else:
             raise
+    return info
+
+@app.route("/api/domain/<path:path>")
+def get_domain(path: str) -> Dict[str, Any]:
+    info = get_file_content_from_hsds(path, get_username())
     return json.dumps(info)
 
 
