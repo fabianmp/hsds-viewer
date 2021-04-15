@@ -82,16 +82,10 @@ def get_folder(path: str) -> List[Dict[str, Any]]:
         path = f"{path}/"
 
     result = {
-        "acls": [],
         "subfolders": [],
         "domains": [],
     }
     with Folder(path, mode="r", **get_credentials()) as folder:
-        if path != "/":
-            try:
-                result["acls"] = folder.getACLs()
-            except:
-                pass
         for name in folder:
             item = folder[name]
             if item["class"] == "folder":
@@ -119,6 +113,22 @@ def get_folder(path: str) -> List[Dict[str, Any]]:
                 )
         folder.close()
     return json.dumps(result)
+
+
+@app.route("/api/folder/<path:path>/acl")
+def get_folder_acl(path: str) -> List[Dict[str, Any]]:
+    path = f"/{path}"
+    if not path.endswith("/"):
+        path = f"{path}/"
+
+    with Folder(path, mode="r", **get_credentials()) as folder:
+        if path != "/":
+            try:
+                acls = folder.getACLs()
+            except:
+                acls = []
+        folder.close()
+    return json.dumps(acls)
 
 
 def calculate_chunks(shape: tuple, chunks: tuple):
@@ -169,7 +179,6 @@ def get_domain(path: str) -> Dict[str, Any]:
         with File(f"/{path}", "r", **get_credentials()) as file:
             groups = [get_group_info(file)]
             info = {
-                "acls": file.getACLs(),
                 "domain": os.path.dirname(file.filename),
                 "filename": os.path.basename(file.filename),
                 "md5_sum": file.md5_sum,
@@ -187,7 +196,6 @@ def get_domain(path: str) -> Dict[str, Any]:
             abort(404)
         elif error.errno in (401, 403):  # Unauthorized
             info = {
-                "acls": [],
                 "domain": os.path.dirname(f"/{path}"),
                 "filename": os.path.basename(f"/{path}"),
                 "md5_sum": "<unauthorized>",
@@ -202,6 +210,21 @@ def get_domain(path: str) -> Dict[str, Any]:
         else:
             raise
     return json.dumps(info)
+
+
+@app.route("/api/domain/<path:path>/acl")
+def get_domain_acl(path: str) -> Dict[str, Any]:
+    try:
+        with File(f"/{path}", "r", **get_credentials()) as file:
+            acls = file.getACLs()
+    except IOError as error:
+        if error.errno in (404, 410):  # Not Found
+            abort(404)
+        elif error.errno in (401, 403):  # Unauthorized
+            acls = []
+        else:
+            raise
+    return json.dumps(acls)
 
 
 @app.route("/api/current_user", methods=["GET", "POST"])

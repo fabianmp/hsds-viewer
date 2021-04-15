@@ -20,7 +20,8 @@ import UpdateIcon from '@material-ui/icons/Update';
 import VerifiedUserIcon from '@material-ui/icons/VerifiedUser';
 import prettyBytes from 'pretty-bytes';
 import React, { useState } from "react";
-import { Domain, GroupType } from "../Api";
+import useSWR from 'swr';
+import { ACL, Domain, GroupType } from "../Api";
 import { AccessControlTable } from "./AccessControl";
 import AlignIcon from "./AlignIcon";
 import DataSetInfo from "./DataSetInfo";
@@ -65,6 +66,7 @@ interface Props {
 export default function DomainInfo({ domain }: Props) {
   const classes = useStyles();
   const [showMetadata, setShowMetadata] = useState(false);
+  const { data: acls = [] } = useSWR<ACL[]>(showMetadata ? `/api/domain${domain.domain}/${domain.filename}/acl` : [])
 
   return (
     <Card style={{ maxHeight: '90vh', overflow: 'auto' }}>
@@ -92,14 +94,14 @@ export default function DomainInfo({ domain }: Props) {
               <Chip icon={<ArchiveIcon />} label={prettyBytes(domain.total_size)} variant="outlined" size="small" />
             </Tooltip>
           </Box>
-          <AccessControlTable variant="small" acls={domain.acls} />
+          <AccessControlTable variant="small" acls={acls} />
         </Collapse>
         <List dense disablePadding subheader={<ListSubheader disableGutters className={classes.groupHeader}><b>Groups</b></ListSubheader>}>
           {domain.groups.map((group: GroupType) => group.type === 'Group'
             ? <GroupInfo group={group} key={group.name} />
             : <DataSetInfo group={group} key={group.name} />)}
         </List>
-        {domain.acls.length === 0 && <Box className={classes.center}>
+        {acls.length === 0 && <Box className={classes.center}>
           <AlignIcon>
             <BlockIcon fontSize="large" style={{ color: red[500] }} />
             <Typography variant="h5">Unauthorized</Typography>

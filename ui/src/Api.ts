@@ -28,7 +28,6 @@ export interface ACL {
 }
 
 export interface Folder {
-  acls: ACL[]
   subfolders: NodeInfo[]
   domains: NodeInfo[]
 }
@@ -51,7 +50,6 @@ export interface GroupType {
 }
 
 export interface Domain {
-  acls: ACL[]
   domain: string
   filename: string
   md5_sum: string

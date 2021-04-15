@@ -11,7 +11,7 @@ import HomeIcon from '@material-ui/icons/Home';
 import clsx from 'clsx';
 import React, { useCallback, useEffect, useState } from 'react';
 import useSWR, { mutate } from 'swr';
-import { Domain, Folder, ServerInfo } from './Api';
+import { ACL, Domain, Folder, ServerInfo } from './Api';
 import AccessControl from './components/AccessControl';
 import AlignIcon from './components/AlignIcon';
 import DomainInfo from './components/DomainInfo';
@@ -62,6 +62,7 @@ export default function App() {
   const { data: rootFolder = undefined } = useSWR<Folder>('/api/folder/');
   const { data: selectedFolder = null } = useSWR<Folder>(selectedFolderPath ? `/api/folder${selectedFolderPath}/` : null)
   const { data: selectedDomain = null } = useSWR<Domain>(selectedDomainPath ? `/api/domain${selectedDomainPath}` : null)
+  const { data: acls = [] } = useSWR<ACL[]>(selectedFolderPath ? `/api/folder${selectedFolderPath}/acl` : [])
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { data: info = {
     endpoint: "",
@@ -73,7 +74,9 @@ export default function App() {
 
   useEffect(() => {
     mutate(`/api/folder${selectedFolderPath}/`);
+    mutate(`/api/folder${selectedFolderPath}/acl`);
     mutate(`/api/domain${selectedDomainPath}`);
+    mutate(`/api/domain${selectedDomainPath}/acl`);
   }, [info.username, selectedFolderPath, selectedDomainPath])
 
   const handleDrawerToggle = useCallback(() => setDrawerOpen(!drawerOpen), [drawerOpen]);
@@ -105,7 +108,7 @@ export default function App() {
               <Typography>{breadCrumbs[breadCrumbs.length - 1][0]}</Typography>
             </Breadcrumbs>
           </Box>}
-          {selectedFolder && selectedFolder.acls.length > 0 && <AccessControl acls={selectedFolder.acls} variant="wide" />}
+          {selectedFolder && acls.length > 0 && <AccessControl acls={acls} variant="wide" />}
           {selectedFolder && <FolderContent folder={selectedFolder} handleSelect={setSelectedDomainPath} selected={selectedDomainPath} />}
         </Grid>
         {selectedDomain && <Grid item xs={12} md={4} xl={3} className={classes.column}>
