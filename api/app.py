@@ -196,6 +196,7 @@ def get_domain(path: str) -> Dict[str, Any]:
             abort(404)
         elif error.errno in (401, 403):  # Unauthorized
             info = {
+                "unauthorized": True,
                 "domain": os.path.dirname(f"/{path}"),
                 "filename": os.path.basename(f"/{path}"),
                 "md5_sum": "<unauthorized>",

@@ -60,4 +60,5 @@ export interface Domain {
   num_chunks: number
   num_groups: number
   groups: GroupType[]
+  unauthorized?: boolean
 }

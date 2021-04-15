@@ -101,7 +101,7 @@ export default function DomainInfo({ domain }: Props) {
             ? <GroupInfo group={group} key={group.name} />
             : <DataSetInfo group={group} key={group.name} />)}
         </List>
-        {acls.length === 0 && <Box className={classes.center}>
+        {domain.unauthorized && <Box className={classes.center}>
           <AlignIcon>
             <BlockIcon fontSize="large" style={{ color: red[500] }} />
             <Typography variant="h5">Unauthorized</Typography>
