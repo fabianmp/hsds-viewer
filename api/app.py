@@ -10,6 +10,7 @@ from flask import Flask, abort, json, request, send_from_directory, session
 from flask_caching import Cache
 from h5pyd import Config, Dataset, File, Folder, Group, getServerInfo
 
+from _version import __version__
 from authentication import configure_authentication
 
 logging.basicConfig(
@@ -65,11 +66,15 @@ def convert_timestamp(timestamp: float) -> int:
 @app.route("/api/info")
 def info() -> Dict[str, Any]:
     try:
-        return getServerInfo(**get_credentials())
+        return {
+            "version": __version__,
+            **getServerInfo(**get_credentials())
+        }
     except Exception as e:
         print(e)
         config = Config()
         return {
+            "version": __version__,
             "endpoint": config["hs_endpoint"],
             "state": "ERROR",
             "node_count": 0,

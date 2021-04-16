@@ -3,6 +3,7 @@ import Hidden from "@material-ui/core/Hidden";
 import IconButton from "@material-ui/core/IconButton";
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import Toolbar from "@material-ui/core/Toolbar";
+import Tooltip from "@material-ui/core/Tooltip";
 import Typography from "@material-ui/core/Typography";
 import ComputerIcon from '@material-ui/icons/Computer';
 import InfoIcon from '@material-ui/icons/Info';
@@ -10,6 +11,7 @@ import MenuIcon from '@material-ui/icons/Menu';
 import NetworkCheckIcon from '@material-ui/icons/NetworkCheck';
 import StorageIcon from '@material-ui/icons/Storage';
 import React from "react";
+import { NavLink } from "react-router-dom";
 import { ServerInfo } from "../Api";
 import AlignIcon from "./AlignIcon";
 import UserMenu from "./UserMenu";
@@ -21,6 +23,9 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     grow: {
       flexGrow: 1,
+    },
+    toolbarButton: {
+      padding: 0
     },
     toolbarSmall: {
       '& > *': {
@@ -66,18 +71,26 @@ export default function TitleBar({ toggleMenu, info }: Props) {
       </Hidden>
       <Hidden mdDown implementation="css">
         <Toolbar className={classes.toolbarLarge}>
-          <Typography variant="h6" noWrap>
-            <AlignIcon><StorageIcon />{info.endpoint}</AlignIcon>
-          </Typography>
+          <Tooltip title="View files">
+            <NavLink to="/" component={IconButton} color="inherit" className={classes.toolbarButton}>
+              <Typography variant="h6" noWrap>
+                <AlignIcon><StorageIcon />{info.endpoint}</AlignIcon>
+              </Typography>
+            </NavLink>
+          </Tooltip>
           <Typography variant="h6">
             <AlignIcon><NetworkCheckIcon />{info.state}</AlignIcon>
           </Typography>
           <Typography variant="h6">
             <AlignIcon><ComputerIcon />{info.node_count} nodes</AlignIcon>
           </Typography>
-          <Typography variant="h6">
-            <AlignIcon><InfoIcon />v{info.hsds_version}</AlignIcon>
-          </Typography>
+          <Tooltip title="Show HSDS server info">
+            <NavLink to="/info" component={IconButton} color="inherit" className={classes.toolbarButton}>
+              <Typography variant="h6">
+                <AlignIcon><InfoIcon />v{info.hsds_version}</AlignIcon>
+              </Typography>
+            </NavLink>
+          </Tooltip>
           <div className={classes.grow} />
           <UserMenu username={info.username} />
         </Toolbar>

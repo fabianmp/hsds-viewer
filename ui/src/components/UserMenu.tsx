@@ -1,6 +1,7 @@
 import Button from "@material-ui/core/Button";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
+import Tooltip from "@material-ui/core/Tooltip";
 import AccountCircleIcon from '@material-ui/icons/AccountCircle';
 import React, { MouseEvent, useState } from "react";
 import useSWR, { cache, mutate } from "swr";
@@ -32,23 +33,29 @@ export default function UserMenu({ username }: Props) {
     mutate('/api/folder/')
   };
 
-  return (<>
-    <Button onClick={users.length > 1 ? handleMenu : undefined} color="inherit" startIcon={<AccountCircleIcon />}>{username}</Button>
-    {users.length > 1 && <Menu
-      anchorEl={menuAnchor}
-      anchorOrigin={{
-        vertical: 'top',
-        horizontal: 'right',
-      }}
-      keepMounted
-      transformOrigin={{
-        vertical: 'top',
-        horizontal: 'right',
-      }}
-      open={open}
-      onClose={() => setMenuAnchor(null)}
-    >
-      {users.map(user => <MenuItem key={user} onClick={() => setCurrentUser(user)}>{user}</MenuItem>)}
-    </Menu>}
-  </>);
+  if (users.length > 1) {
+    return (<>
+      <Tooltip title="Switch HSDS user">
+        <Button onClick={handleMenu} color="inherit" startIcon={<AccountCircleIcon />}>{username}</Button>
+      </Tooltip>
+      <Menu
+        anchorEl={menuAnchor}
+        anchorOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        keepMounted
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        open={open}
+        onClose={() => setMenuAnchor(null)}
+      >
+        {users.map(user => <MenuItem key={user} onClick={() => setCurrentUser(user)}>{user}</MenuItem>)}
+      </Menu>
+    </>);
+  } else {
+    return <Button color="inherit" startIcon={<AccountCircleIcon />}>{username}</Button>
+  }
 }

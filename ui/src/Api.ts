@@ -1,9 +1,14 @@
 export interface ServerInfo {
+  version: string
   endpoint: string
   state: string
   node_count: number
   hsds_version: string
   username: string
+  name?: string
+  about?: string
+  greeting?: string
+  start_time?: number
 }
 
 export interface NodeInfo {

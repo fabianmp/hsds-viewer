@@ -1,36 +1,34 @@
 import Box from '@material-ui/core/Box';
-import Breadcrumbs from '@material-ui/core/Breadcrumbs';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import Drawer from '@material-ui/core/Drawer';
 import Grid from '@material-ui/core/Grid';
 import Hidden from '@material-ui/core/Hidden';
-import Link from '@material-ui/core/Link';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
-import Typography from '@material-ui/core/Typography';
-import HomeIcon from '@material-ui/icons/Home';
 import clsx from 'clsx';
 import React, { useCallback, useEffect, useState } from 'react';
+import { HashRouter as Router, Route, Switch } from "react-router-dom";
 import useSWR, { mutate } from 'swr';
 import { ACL, Domain, Folder, ServerInfo } from './Api';
 import AccessControl from './components/AccessControl';
-import AlignIcon from './components/AlignIcon';
 import DomainInfo from './components/DomainInfo';
 import FolderContent from './components/FolderContent';
+import FolderCrumbs from './components/FolderCrumbs';
 import FolderTree from './components/FolderTree';
+import ServerInfoPage from './components/ServerInfoPage';
 import TitleBar from './components/TitleBar';
 
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     content: {
-      flexGrow: 1,
-      height: '100vh',
-      overflow: 'auto',
       paddingTop: theme.spacing(10),
     },
     column: {
       paddingLeft: theme.spacing(2),
       paddingRight: theme.spacing(2),
+      '& > * + *': {
+        marginTop: theme.spacing(1),
+      },
     },
     drawerSmall: {
       minWidth: '50vw',
@@ -65,6 +63,7 @@ export default function App() {
   const { data: acls = [] } = useSWR<ACL[]>(selectedFolderPath ? `/api/folder${selectedFolderPath}/acl` : [])
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { data: info = {
+    version: "<unknown>",
     endpoint: "",
     state: "LOADING",
     node_count: 0,
@@ -80,41 +79,42 @@ export default function App() {
   }, [info.username, selectedFolderPath, selectedDomainPath])
 
   const handleDrawerToggle = useCallback(() => setDrawerOpen(!drawerOpen), [drawerOpen]);
-  const folderNames = selectedFolderPath.split("/").filter(x => x);
-  const breadCrumbs = folderNames.map((n, i) => [n, `/${folderNames.slice(0, i + 1).join("/")}/`]);
 
   const classes = useStyles();
   return (
-    <Box display="flex">
-      <CssBaseline />
-      <TitleBar toggleMenu={handleDrawerToggle} info={info} />
-      <Hidden lgUp implementation="css">
-        <Drawer variant="temporary" className={classes.drawerSmall} classes={{ paper: clsx(classes.drawerSmall, classes.drawerPaperSmall) }}
-          open={drawerOpen} onClose={handleDrawerToggle}>
-          {rootFolder && <FolderTree folder={rootFolder} handleNodeSelect={setSelectedFolderPath} />}
-        </Drawer>
-      </Hidden>
-      <Hidden mdDown implementation="css">
-        <Drawer variant="permanent" className={classes.drawerLarge} classes={{ paper: clsx(classes.drawerLarge, classes.drawerPaperLarge) }} open>
-          {rootFolder && <FolderTree folder={rootFolder} handleNodeSelect={setSelectedFolderPath} />}
-        </Drawer>
-      </Hidden>
-      <Grid container className={classes.content}>
-        <Grid item xs={12} md={8} xl={9} className={classes.column}>
-          {breadCrumbs.length > 0 && <Box className={classes.breadCrumbs}>
-            <Breadcrumbs aria-label="breadcrumb">
-              <Typography><AlignIcon><HomeIcon fontSize="small" />HSDS</AlignIcon></Typography>
-              {breadCrumbs.slice(0, -1).map(([n, p]) => <Link href="#" key={p} onClick={() => setSelectedFolderPath(p)}>{n}</Link>)}
-              <Typography>{breadCrumbs[breadCrumbs.length - 1][0]}</Typography>
-            </Breadcrumbs>
-          </Box>}
-          {selectedFolder && acls.length > 0 && <AccessControl acls={acls} variant="wide" />}
-          {selectedFolder && <FolderContent folder={selectedFolder} handleSelect={setSelectedDomainPath} selected={selectedDomainPath} />}
-        </Grid>
-        {selectedDomain && <Grid item xs={12} md={4} xl={3} className={classes.column}>
-          <DomainInfo domain={selectedDomain} />
-        </Grid>}
-      </Grid>
-    </Box>
+    <Router>
+      <Box display="flex" className={classes.content}>
+        <CssBaseline />
+        <TitleBar toggleMenu={handleDrawerToggle} info={info} />
+        <Switch>
+          <Route path="/info">
+            <ServerInfoPage info={info} />
+          </Route>
+          <Route path="/:path*">
+            <Hidden lgUp implementation="css">
+              <Drawer variant="temporary" className={classes.drawerSmall} classes={{ paper: clsx(classes.drawerSmall, classes.drawerPaperSmall) }}
+                open={drawerOpen} onClose={handleDrawerToggle}>
+                {rootFolder && <FolderTree folder={rootFolder} handleNodeSelect={setSelectedFolderPath} />}
+              </Drawer>
+            </Hidden>
+            <Hidden mdDown implementation="css">
+              <Drawer variant="permanent" className={classes.drawerLarge} classes={{ paper: clsx(classes.drawerLarge, classes.drawerPaperLarge) }} open>
+                {rootFolder && <FolderTree folder={rootFolder} handleNodeSelect={setSelectedFolderPath} />}
+              </Drawer>
+            </Hidden>
+            <Grid container>
+              <Grid item xs={12} md={8} xl={9} className={classes.column}>
+                {selectedFolder && <FolderCrumbs selectPath={setSelectedFolderPath} />}
+                {selectedFolder && acls.length > 0 && <AccessControl acls={acls} variant="wide" />}
+                {selectedFolder && <FolderContent folder={selectedFolder} handleSelect={setSelectedDomainPath} selected={selectedDomainPath} />}
+              </Grid>
+              {selectedDomain && <Grid item xs={12} md={4} xl={3} className={classes.column}>
+                <DomainInfo domain={selectedDomain} />
+              </Grid>}
+            </Grid>
+          </Route>
+        </Switch>
+      </Box>
+    </Router>
   );
 }
