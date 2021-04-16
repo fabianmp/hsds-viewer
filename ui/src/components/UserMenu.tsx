@@ -33,8 +33,8 @@ export default function UserMenu({ username }: Props) {
   };
 
   return (<>
-    <Button onClick={handleMenu} color="inherit" startIcon={<AccountCircleIcon />}>{username}</Button>
-    <Menu
+    <Button onClick={users.length > 1 ? handleMenu : undefined} color="inherit" startIcon={<AccountCircleIcon />}>{username}</Button>
+    {users.length > 1 && <Menu
       anchorEl={menuAnchor}
       anchorOrigin={{
         vertical: 'top',
@@ -49,6 +49,6 @@ export default function UserMenu({ username }: Props) {
       onClose={() => setMenuAnchor(null)}
     >
       {users.map(user => <MenuItem key={user} onClick={() => setCurrentUser(user)}>{user}</MenuItem>)}
-    </Menu>
+    </Menu>}
   </>);
 }
