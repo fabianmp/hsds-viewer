@@ -67,3 +67,27 @@ export interface Domain {
   groups: GroupType[]
   unauthorized?: boolean
 }
+
+export interface NodeMetadata {
+  id: string
+  state: string
+  start_time: number
+}
+
+export interface RequestCount {
+  GET: number
+  PUT: number
+  POST: number
+  DELETE: number
+  num_tasks: number
+}
+
+export interface HsdsNodeInfo {
+  node: NodeMetadata
+  req_count: RequestCount
+}
+
+export interface CurrentUser {
+  name: string
+  roles: string[]
+}

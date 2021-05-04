@@ -29,6 +29,7 @@ export default function UserMenu({ username }: Props) {
       },
       body: JSON.stringify({ name })
     });
+    mutate('/api/current_user');
     mutate('/api/info');
     mutate('/api/folder/')
   };

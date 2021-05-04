@@ -12,7 +12,8 @@ import NetworkCheckIcon from '@material-ui/icons/NetworkCheck';
 import StorageIcon from '@material-ui/icons/Storage';
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { ServerInfo } from "../Api";
+import useSWR from "swr";
+import { CurrentUser, ServerInfo } from "../Api";
 import AlignIcon from "./AlignIcon";
 import UserMenu from "./UserMenu";
 
@@ -51,6 +52,11 @@ interface Props {
 
 export default function TitleBar({ toggleMenu, info }: Props) {
   const classes = useStyles();
+  const { data: features = [] } = useSWR<string[]>('/api/features');
+  const { data: currentUser = { name: "<unknown>", roles: [] } } = useSWR<CurrentUser>('/api/current_user');
+  const isAdmin = currentUser.roles.includes("admin");
+  const hasNodeInfo = features.includes("node_info");
+
   return (
     <AppBar position="fixed" className={classes.titleBar}>
       <Hidden lgUp implementation="css">
@@ -66,7 +72,7 @@ export default function TitleBar({ toggleMenu, info }: Props) {
             </Typography>
           </Hidden>
           <div className={classes.grow} />
-          <UserMenu username={info.username} />
+          <UserMenu username={currentUser.name} />
         </Toolbar>
       </Hidden>
       <Hidden mdDown implementation="css">
@@ -81,9 +87,19 @@ export default function TitleBar({ toggleMenu, info }: Props) {
           <Typography variant="h6">
             <AlignIcon><NetworkCheckIcon />{info.state}</AlignIcon>
           </Typography>
-          <Typography variant="h6">
-            <AlignIcon><ComputerIcon />{info.node_count} nodes</AlignIcon>
-          </Typography>
+          {(hasNodeInfo && isAdmin) ?
+            <Tooltip title="View node info">
+              <NavLink to="/nodes" component={IconButton} color="inherit" className={classes.toolbarButton}>
+                <Typography variant="h6">
+                  <AlignIcon><ComputerIcon />{info.node_count} nodes</AlignIcon>
+                </Typography>
+              </NavLink>
+            </Tooltip>
+            :
+            <Typography variant="h6">
+              <AlignIcon><ComputerIcon />{info.node_count} nodes</AlignIcon>
+            </Typography>
+          }
           <Tooltip title="Show HSDS server info">
             <NavLink to="/info" component={IconButton} color="inherit" className={classes.toolbarButton}>
               <Typography variant="h6">
@@ -92,7 +108,7 @@ export default function TitleBar({ toggleMenu, info }: Props) {
             </NavLink>
           </Tooltip>
           <div className={classes.grow} />
-          <UserMenu username={info.username} />
+          <UserMenu username={currentUser.name} />
         </Toolbar>
       </Hidden>
     </AppBar>

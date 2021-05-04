@@ -14,6 +14,7 @@ import DomainInfo from './components/DomainInfo';
 import FolderContent from './components/FolderContent';
 import FolderCrumbs from './components/FolderCrumbs';
 import FolderTree from './components/FolderTree';
+import NodeInfo from './components/NodeInfo';
 import ServerInfoPage from './components/ServerInfoPage';
 import TitleBar from './components/TitleBar';
 
@@ -89,6 +90,9 @@ export default function App() {
         <Switch>
           <Route path="/info">
             <ServerInfoPage info={info} />
+          </Route>
+          <Route path="/nodes">
+            <NodeInfo />
           </Route>
           <Route path="/:path*">
             <Hidden lgUp implementation="css">

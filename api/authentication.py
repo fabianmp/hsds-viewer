@@ -1,8 +1,40 @@
+import json
 import os
+from base64 import b64decode
+from functools import wraps
 from time import time
 
 from authlib.integrations.flask_client import OAuth
-from flask import redirect, request, session, url_for
+from flask import abort, redirect, request, session, url_for
+
+oidc_roles_claim = os.environ.get("OIDC_ROLES_CLAIM", "roles")
+
+
+def require_role(role):
+    def require_role_decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if "roles" not in session:
+                abort(401)
+            if role not in session["roles"]:
+                abort(403)
+            return f(*args, **kwargs)
+
+        return decorated_function
+
+    return require_role_decorator
+
+
+def update_session(token):
+    session["access_token"] = token["access_token"]
+    session["refresh_token"] = token["refresh_token"]
+    session["expires_at"] = token["expires_at"]
+    access_token_info = token["access_token"].split(".")[1]
+    access_token_info_with_padding = (
+        f"{access_token_info}{'=' * (len(access_token_info) % 4)}"
+    )
+    data = json.loads(b64decode(access_token_info_with_padding))
+    session["roles"] = data.get(oidc_roles_claim, [])
 
 
 def configure_authentication(app):
@@ -40,9 +72,7 @@ def configure_authentication(app):
         token = oauth.oidc.fetch_access_token(
             refresh_token=session["refresh_token"], grant_type="refresh_token"
         )
-        session["access_token"] = token["access_token"]
-        session["refresh_token"] = token["refresh_token"]
-        session["expires_at"] = token["expires_at"]
+        update_session(token)
 
     @app.before_request
     def require_login():
@@ -65,7 +95,5 @@ def configure_authentication(app):
     def auth():
         token = oauth.oidc.authorize_access_token()
         session["username"] = oauth.oidc.parse_id_token(token)["preferred_username"]
-        session["access_token"] = token["access_token"]
-        session["refresh_token"] = token["refresh_token"]
-        session["expires_at"] = token["expires_at"]
+        update_session(token)
         return redirect(request.args.get("redirect_path", "/"))

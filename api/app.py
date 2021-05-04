@@ -2,16 +2,19 @@ import logging
 import os
 import secrets
 from functools import reduce
+from itertools import product
 from math import ceil
 from typing import Any, Dict, List, Union
+from urllib.parse import urlparse
 
 import numpy as np
+import requests
 from flask import Flask, abort, json, request, send_from_directory, session
 from flask_caching import Cache
 from h5pyd import Config, Dataset, File, Folder, Group, getServerInfo
 
 from _version import __version__
-from authentication import configure_authentication
+from authentication import configure_authentication, require_role
 
 logging.basicConfig(
     format=os.environ.get("LOG_FORMAT", "%(asctime)s\t%(levelname)s\t%(message)s"),
@@ -40,6 +43,7 @@ def get_username() -> str:
     else:
         return session.setdefault("hsds_user", os.environ.get("HSDS_DEFAULT_USER", ""))
 
+
 def get_credentials() -> Dict[str, str]:
     username = get_username()
 
@@ -66,10 +70,7 @@ def convert_timestamp(timestamp: float) -> int:
 @app.route("/api/info")
 def info() -> Dict[str, Any]:
     try:
-        return {
-            "version": __version__,
-            **getServerInfo(**get_credentials())
-        }
+        return {"version": __version__, **getServerInfo(**get_credentials())}
     except Exception as e:
         print(e)
         config = Config()
@@ -227,6 +228,7 @@ def get_file_content_from_hsds(path, username):
             raise
     return info
 
+
 @app.route("/api/domain/<path:path>")
 def get_domain(path: str) -> Dict[str, Any]:
     info = get_file_content_from_hsds(path, get_username())
@@ -258,7 +260,7 @@ def current_user():
     else:
         session.setdefault("hsds_user", os.environ.get("HSDS_DEFAULT_USER", "admin"))
 
-    return json.dumps({"name": session["hsds_user"]})
+    return json.dumps({"name": session["hsds_user"], "roles": session.get("roles", [])})
 
 
 @app.route("/api/users")
@@ -267,6 +269,29 @@ def get_users():
     if "username" in session:
         users.insert(0, session["username"])
     return json.dumps(users)
+
+
+@app.route("/api/features")
+def get_features():
+    features = []
+    if "FEATURE_NODE_INFO_ENABLED" in os.environ:
+        features.append("node_info")
+    return json.dumps(features)
+
+
+if "FEATURE_NODE_INFO_ENABLED" in os.environ:
+
+    @app.route("/api/nodes")
+    @require_role("admin")
+    def get_nodes():
+        endpoint = Config()["hs_endpoint"]
+        about = requests.get(f"{endpoint}/about").json()
+        nodes = []
+        for url, port in product(about["dn_urls"], (5101, 6101)):
+            parsed = urlparse(url)
+            info = requests.get(f"{parsed.scheme}://{parsed.hostname}:{port}").json()
+            nodes.append(info)
+        return json.dumps(nodes)
 
 
 if os.environ.get("ENABLE_CORS", False):
