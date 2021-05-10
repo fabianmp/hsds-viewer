@@ -84,7 +84,7 @@ def get_folder_content_from_hsds(path, username):
         "subfolders": [],
         "domains": [],
     }
-    with Folder(path, mode="r", **get_credentials()) as folder:
+    with Folder(path, mode="r", **get_credentials(), batch_size=100) as folder:
         for name in folder:
             item = folder[name]
             if item["class"] == "folder":
