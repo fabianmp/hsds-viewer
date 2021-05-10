@@ -13,7 +13,8 @@ WORKDIR /hsds-viewer
 COPY api/requirements.txt /hsds-viewer/
 RUN pip install --no-cache-dir --prefer-binary \
         -r /hsds-viewer/requirements.txt \
-        gunicorn[eventlet]==20.0.4
+        eventlet==0.30.2 \
+        gunicorn==20.0.4
 
 COPY api /hsds-viewer
 COPY --from=web /ui/build /hsds-viewer/static
