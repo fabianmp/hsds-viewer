@@ -45,8 +45,8 @@ const useStyles = makeStyles((theme: Theme) =>
     drawerPaperLarge: {
       overflow: 'auto',
       paddingTop: theme.spacing(10),
-      paddingLeft: theme.spacing(2),
-      paddingRight: theme.spacing(2),
+      paddingLeft: theme.spacing(0),
+      paddingRight: theme.spacing(0),
     },
     breadCrumbs: {
       padding: theme.spacing(1),
