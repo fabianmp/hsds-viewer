@@ -94,17 +94,17 @@ export default function App() {
             <Hidden lgUp implementation="css">
               <Drawer variant="temporary" className={classes.drawerSmall} classes={{ paper: clsx(classes.drawerSmall, classes.drawerPaperSmall) }}
                 open={drawerOpen} onClose={handleDrawerToggle}>
-                {rootFolder && <FolderTree folder={rootFolder} handleNodeSelect={setSelectedFolderPath} />}
+                {rootFolder && <FolderTree folder={rootFolder} selectedFolderPath={selectedFolderPath} handleNodeSelect={setSelectedFolderPath} />}
               </Drawer>
             </Hidden>
             <Hidden mdDown implementation="css">
               <Drawer variant="permanent" className={classes.drawerLarge} classes={{ paper: clsx(classes.drawerLarge, classes.drawerPaperLarge) }} open>
-                {rootFolder && <FolderTree folder={rootFolder} handleNodeSelect={setSelectedFolderPath} />}
+                {rootFolder && <FolderTree folder={rootFolder} selectedFolderPath={selectedFolderPath} handleNodeSelect={setSelectedFolderPath} />}
               </Drawer>
             </Hidden>
             <Grid container>
               <Grid item xs={12} md={8} xl={9} className={classes.column}>
-                {selectedFolder && <FolderCrumbs selectPath={setSelectedFolderPath} />}
+                {selectedFolder && <FolderCrumbs selectedFolderPath={selectedFolderPath} selectPath={setSelectedFolderPath} />}
                 {selectedFolder && acls.length > 0 && <AccessControl acls={acls} variant="wide" />}
                 {selectedFolder && <FolderContent folder={selectedFolder} handleSelect={setSelectedDomainPath} selected={selectedDomainPath} />}
               </Grid>

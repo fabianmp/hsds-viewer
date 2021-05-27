@@ -28,15 +28,15 @@ const useStyles = makeStyles((theme: Theme) =>
 
 interface Props {
   folder: Folder,
+  selectedFolderPath: string,
   handleNodeSelect: (path: string) => void
 }
 
-export default function FolderTree({ folder, handleNodeSelect }: Props) {
+export default function FolderTree({ folder, selectedFolderPath, handleNodeSelect }: Props) {
   const classes = useStyles();
   const history = useHistory();
 
   const [expanded, setExpanded] = useState<string[]>([]);
-  const [selected, setSelected] = useState<string>("");
 
   const expandNode = (nodeId: string) => {
     if (!expanded.includes(nodeId)) {
@@ -45,9 +45,8 @@ export default function FolderTree({ folder, handleNodeSelect }: Props) {
   }
 
   const handleSelect = (event: ChangeEvent<{}>, nodeId: string) => {
-    setSelected(nodeId);
-    history.push(nodeId);
     handleNodeSelect(nodeId);
+    history.push(nodeId);
   };
 
   const reloadFolders = () => {
@@ -65,13 +64,13 @@ export default function FolderTree({ folder, handleNodeSelect }: Props) {
     </Box>
     <TreeView
       expanded={expanded}
-      selected={selected}
+      selected={selectedFolderPath}
       onNodeSelect={handleSelect}
       defaultCollapseIcon={<FolderOpenIcon />}
       defaultExpandIcon={<FolderIcon />}
       defaultEndIcon={<FolderIcon />}>
       {folder?.subfolders.map((folder: NodeInfo) => <TreeFolder key={folder.path} node={folder}
-        selectedNode={selected} expandedNodes={expanded} expandNode={expandNode} />)}
+        selectedNode={selectedFolderPath} expandedNodes={expanded} expandNode={expandNode} />)}
     </TreeView>
   </>);
 }

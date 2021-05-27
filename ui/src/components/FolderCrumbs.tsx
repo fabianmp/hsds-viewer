@@ -5,7 +5,7 @@ import Typography from "@material-ui/core/Typography";
 import FolderIcon from '@material-ui/icons/Folder';
 import FolderOpenIcon from '@material-ui/icons/FolderOpen';
 import React from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useHistory } from 'react-router-dom';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -20,24 +20,26 @@ const useStyles = makeStyles((theme: Theme) =>
   }),
 );
 
-interface RouteParams {
-  path: string
-}
-
 interface Props {
+  selectedFolderPath: string
   selectPath: (path: string) => void
 }
 
-export default function FolderCrumbs({ selectPath }: Props) {
+export default function FolderCrumbs({ selectPath, selectedFolderPath }: Props) {
+  const history = useHistory();
   const classes = useStyles();
-  const { path: folderPath = "" } = useParams<RouteParams>();
 
-  const folderNames = folderPath.split("/");
+  const folderNames = selectedFolderPath.replace(/^\/?(.*?)\/?$/, "$1").split("/");
   const breadCrumbs = folderNames.map((name, index) => [name, `/${folderNames.slice(0, index + 1).join("/")}/`]);
+
+  const handleSelect = (nodeId: string) => {
+    selectPath(nodeId);
+    history.push(nodeId);
+  };
 
   return (<Breadcrumbs aria-label="breadcrumb">
     {breadCrumbs.slice(0, -1).map(([name, path]) =>
-      <Link to={path} key={path} component={MaterialLink} onClick={() => selectPath(path)}
+      <Link to={path} key={path} component={MaterialLink} onClick={() => handleSelect(path)}
         className={classes.crumb}><FolderIcon />{name}</Link>)}
     <Typography className={classes.crumb}><FolderOpenIcon />{breadCrumbs[breadCrumbs.length - 1][0]}</Typography>
   </Breadcrumbs>);
