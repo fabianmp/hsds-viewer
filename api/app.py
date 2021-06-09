@@ -289,7 +289,7 @@ if "FEATURE_NODE_INFO_ENABLED" in os.environ:
         nodes = []
         for url, port in product(about["dn_urls"], (5101, 6101)):
             parsed = urlparse(url)
-            info = requests.get(f"{parsed.scheme}://{parsed.hostname}:{port}").json()
+            info = requests.get(f"{parsed.scheme}://{parsed.hostname}:{port}/info").json()
             nodes.append(info)
         return json.dumps(nodes)
 
