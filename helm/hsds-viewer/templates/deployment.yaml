@@ -43,6 +43,10 @@ spec:
             - name: HSDS_CREDENTIALS_FILE
               value: /credentials.json
             {{- end }}
+            {{- if .Values.features.nodeInfo }}
+            - name: FEATURE_NODE_INFO_ENABLED
+              value: "1"
+            {{- end }}
             {{- if .Values.oidc.enabled }}
             - name: OIDC_ENDPOINT
               value: {{ .Values.oidc.endpoint }}
@@ -53,6 +57,8 @@ spec:
                 secretKeyRef:
                   name: {{ .Release.Name }}-oidc
                   key: secret
+            - name: OIDC_ROLES_CLAIM
+              value: {{ .Values.oidc.rolesClaim }}
             {{- end }}
           {{- if .Values.hsds.credentials }}
           volumeMounts:

@@ -21,11 +21,15 @@ hsds:
     # user1: password1
     # user2: password2
 
+features:
+  nodeInfo: false
+
 oidc:
   enabled: false
   endpoint: ""
   client: ""
   secret: ""
+  rolesClaim: roles
 
 podAnnotations: {}
 
