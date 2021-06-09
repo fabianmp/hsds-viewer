@@ -1,4 +1,4 @@
-FROM node:14-stretch-slim as web
+FROM node:16-stretch-slim as web
 
 WORKDIR /ui
 COPY ui/package-lock.json ui/package.json /ui/
