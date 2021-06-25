@@ -1,5 +1,4 @@
 import AppBar from "@material-ui/core/AppBar";
-import Hidden from "@material-ui/core/Hidden";
 import IconButton from "@material-ui/core/IconButton";
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import Toolbar from "@material-ui/core/Toolbar";
@@ -7,13 +6,13 @@ import Tooltip from "@material-ui/core/Tooltip";
 import Typography from "@material-ui/core/Typography";
 import ComputerIcon from '@material-ui/icons/Computer';
 import InfoIcon from '@material-ui/icons/Info';
-import MenuIcon from '@material-ui/icons/Menu';
 import NetworkCheckIcon from '@material-ui/icons/NetworkCheck';
 import StorageIcon from '@material-ui/icons/Storage';
 import React from "react";
 import { NavLink } from "react-router-dom";
 import useSWR from "swr";
-import { CurrentUser, ServerInfo } from "../Api";
+import { CurrentUser } from "../Api";
+import { useServerInfo } from "../Hooks";
 import AlignIcon from "./AlignIcon";
 import UserMenu from "./UserMenu";
 
@@ -45,72 +44,50 @@ const useStyles = makeStyles((theme: Theme) =>
   }),
 );
 
-interface Props {
-  toggleMenu: () => void
-  info: ServerInfo
-}
-
-export default function TitleBar({ toggleMenu, info }: Props) {
+export default function TitleBar() {
   const classes = useStyles();
   const { data: features = [] } = useSWR<string[]>('/api/features');
   const { data: currentUser = { name: "<unknown>", roles: [] } } = useSWR<CurrentUser>('/api/current_user');
   const isAdmin = currentUser.roles.includes("admin");
   const hasNodeInfo = features.includes("node_info");
+  const info = useServerInfo();
 
   return (
     <AppBar position="fixed" className={classes.titleBar}>
-      <Hidden lgUp implementation="css">
-        <Toolbar className={classes.toolbarSmall}>
-          <IconButton color="inherit" edge="start" onClick={toggleMenu}>
-            <Typography variant="h6">
-              <AlignIcon><MenuIcon />Folders</AlignIcon>
-            </Typography>
-          </IconButton>
-          <Hidden xsDown>
+      <Toolbar className={classes.toolbarLarge}>
+        <Tooltip title="View files">
+          <NavLink to="/" component={IconButton} color="inherit" className={classes.toolbarButton}>
             <Typography variant="h6" noWrap>
-              {info.endpoint}
+              <AlignIcon><StorageIcon />{info.endpoint}</AlignIcon>
             </Typography>
-          </Hidden>
-          <div className={classes.grow} />
-          <UserMenu username={currentUser.name} />
-        </Toolbar>
-      </Hidden>
-      <Hidden mdDown implementation="css">
-        <Toolbar className={classes.toolbarLarge}>
-          <Tooltip title="View files">
-            <NavLink to="/" component={IconButton} color="inherit" className={classes.toolbarButton}>
-              <Typography variant="h6" noWrap>
-                <AlignIcon><StorageIcon />{info.endpoint}</AlignIcon>
-              </Typography>
-            </NavLink>
-          </Tooltip>
-          <Typography variant="h6">
-            <AlignIcon><NetworkCheckIcon />{info.state}</AlignIcon>
-          </Typography>
-          {(hasNodeInfo && isAdmin) ?
-            <Tooltip title="View node info">
-              <NavLink to="/nodes" component={IconButton} color="inherit" className={classes.toolbarButton}>
-                <Typography variant="h6">
-                  <AlignIcon><ComputerIcon />{info.node_count} nodes</AlignIcon>
-                </Typography>
-              </NavLink>
-            </Tooltip>
-            :
-            <Typography variant="h6">
-              <AlignIcon><ComputerIcon />{info.node_count} nodes</AlignIcon>
-            </Typography>
-          }
-          <Tooltip title="Show HSDS server info">
-            <NavLink to="/info" component={IconButton} color="inherit" className={classes.toolbarButton}>
+          </NavLink>
+        </Tooltip>
+        <Typography variant="h6">
+          <AlignIcon><NetworkCheckIcon />{info.state}</AlignIcon>
+        </Typography>
+        {(hasNodeInfo && isAdmin) ?
+          <Tooltip title="View node info">
+            <NavLink to="/nodes" component={IconButton} color="inherit" className={classes.toolbarButton}>
               <Typography variant="h6">
-                <AlignIcon><InfoIcon />v{info.hsds_version}</AlignIcon>
+                <AlignIcon><ComputerIcon />{info.node_count} nodes</AlignIcon>
               </Typography>
             </NavLink>
           </Tooltip>
-          <div className={classes.grow} />
-          <UserMenu username={currentUser.name} />
-        </Toolbar>
-      </Hidden>
+          :
+          <Typography variant="h6">
+            <AlignIcon><ComputerIcon />{info.node_count} nodes</AlignIcon>
+          </Typography>
+        }
+        <Tooltip title="Show HSDS server info">
+          <NavLink to="/info" component={IconButton} color="inherit" className={classes.toolbarButton}>
+            <Typography variant="h6">
+              <AlignIcon><InfoIcon />v{info.hsds_version}</AlignIcon>
+            </Typography>
+          </NavLink>
+        </Tooltip>
+        <div className={classes.grow} />
+        <UserMenu username={currentUser.name} />
+      </Toolbar>
     </AppBar>
   );
 }

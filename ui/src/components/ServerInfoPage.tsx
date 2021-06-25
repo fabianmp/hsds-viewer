@@ -7,7 +7,7 @@ import AccessTimeIcon from '@material-ui/icons/AccessTime';
 import HomeIcon from '@material-ui/icons/Home';
 import PageviewIcon from '@material-ui/icons/Pageview';
 import React from "react";
-import { ServerInfo } from '../Api';
+import { useServerInfo } from "../Hooks";
 import AlignIcon from "./AlignIcon";
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -20,12 +20,9 @@ const useStyles = makeStyles((theme: Theme) =>
   }),
 );
 
-interface Props {
-  info: ServerInfo
-}
-
-export default function ServerInfoPage({ info }: Props) {
+export default function ServerInfoPage() {
   const classes = useStyles();
+  const info = useServerInfo();
 
   return (
     <Container className={classes.root}>
