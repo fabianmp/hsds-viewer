@@ -153,14 +153,12 @@ def get_folder_content_from_hsds(path, username):
 @app.route("/api/folder/", defaults={"path": "/"})
 @app.route("/api/folder/<hsds_folder:path>")
 def get_folder(path: str) -> List[Dict[str, Any]]:
-    app.logger.info(f"get_folder {path}")
     result = get_folder_content_from_hsds(path, get_username())
     return json.dumps(result)
 
 
 @app.route("/api/folder/<hsds_folder:path>/acl")
 def get_folder_acl(path: str) -> List[Dict[str, Any]]:
-    app.logger.info(f"get_folder_acl {path}")
     with Folder(path, mode="r", **get_credentials()) as folder:
         if path != "/":
             try:
@@ -188,7 +186,6 @@ def delete_folder_recursively(path: str, username: str):
 
 @app.route("/api/folder/<hsds_folder:path>", methods=["DELETE"])
 def delete_folder(path: str):
-    app.logger.info(f"delete_folder {path}")
     username = get_username()
     delete_folder_recursively(path, username)
 
@@ -290,14 +287,12 @@ def get_file_content_from_hsds(path, username):
 
 @app.route("/api/domain/<hsds_domain:path>")
 def get_domain(path: str) -> Dict[str, Any]:
-    app.logger.info(f"get_domain {path}")
     info = get_file_content_from_hsds(path, get_username())
     return json.dumps(info)
 
 
 @app.route("/api/domain/<hsds_domain:path>/acl")
 def get_domain_acl(path: str) -> Dict[str, Any]:
-    app.logger.info(f"get_domain_acl {path}")
     try:
         with File(path, "r", **get_credentials()) as file:
             acls = file.getACLs()
@@ -313,7 +308,6 @@ def get_domain_acl(path: str) -> Dict[str, Any]:
 
 @app.route("/api/domain/<hsds_domain:path>", methods=["DELETE"])
 def delete_domain(path: str):
-    app.logger.info(f"delete_domain {path}")
     folder_name = os.path.dirname(path)
     file_name = os.path.basename(path)
     if not folder_name.endswith("/"):
