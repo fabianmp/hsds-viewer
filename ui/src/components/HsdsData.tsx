@@ -1,8 +1,17 @@
+import Button from '@material-ui/core/Button';
+import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import DialogTitle from '@material-ui/core/DialogTitle';
 import Drawer from '@material-ui/core/Drawer';
 import Grid from '@material-ui/core/Grid';
+import Snackbar from '@material-ui/core/Snackbar';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
+import DeleteIcon from '@material-ui/icons/Delete';
+import Alert from '@material-ui/lab/Alert';
 import clsx from 'clsx';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import useSWR, { mutate } from 'swr';
 import { ACL, Domain, Folder } from '../Api';
 import { useServerInfo } from '../Hooks';
@@ -31,6 +40,12 @@ const useStyles = makeStyles((theme: Theme) =>
       paddingLeft: theme.spacing(0),
       paddingRight: theme.spacing(0),
     },
+    crumbContainer: {
+      display: 'flex',
+    },
+    crumbs: {
+      flexGrow: 1
+    }
   }),
 );
 
@@ -42,6 +57,8 @@ export default function HsdsData() {
   const { data: selectedDomain = null } = useSWR<Domain>(selectedDomainPath ? `/api/domain${selectedDomainPath}` : null)
   const { data: acls = [] } = useSWR<ACL[]>(selectedFolderPath ? `/api/folder${selectedFolderPath}/acl` : [])
   const info = useServerInfo();
+  const [deleteFolder, setDeleteFolder] = React.useState("");
+  const [errorMessage, setErrorMessage] = React.useState("");
 
   useEffect(() => {
     mutate(`/api/folder${selectedFolderPath}/`);
@@ -55,6 +72,38 @@ export default function HsdsData() {
     setSelectedDomainPath("");
   }
 
+  const handleErrorMessage = () => {
+    setErrorMessage("");
+  }
+
+  const handleDeleteFolder = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDeleteFolder(selectedFolderPath);
+  }
+
+  const handleConfirmDeleteDomain = async () => {
+    if (deleteFolder.length === 0) {
+      return
+    }
+    const response = await fetch(`/api/folder${deleteFolder}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    if (!response.ok && response.status === 403) {
+      setErrorMessage(`You are not allowed to delete ${deleteFolder}`);
+    };
+
+    const folders = deleteFolder.split('/');
+    for (let i = 1; i < folders.length; ++i) {
+      mutate(`/api/folder${folders.slice(0, i).join('/')}`)
+    }
+    setDeleteFolder("");
+    setSelectedDomainPath("");
+    setSelectedFolderPath(folders.slice(0, -1).join('/'));
+  };
+
   const classes = useStyles();
   return (<>
     <Drawer variant="permanent" className={classes.drawer} classes={{ paper: clsx(classes.drawer, classes.drawerPaper) }} open>
@@ -62,13 +111,35 @@ export default function HsdsData() {
     </Drawer>
     <Grid container>
       <Grid item xs={12} md={8} xl={9} className={classes.column}>
-        {selectedFolder && <FolderCrumbs selectedFolderPath={selectedFolderPath} selectPath={handleSelectFolder} />}
-        {selectedFolder && acls.length > 0 && <AccessControl acls={acls} variant="wide" />}
-        {selectedFolder && <FolderContent folder={selectedFolder} handleSelect={setSelectedDomainPath} selected={selectedDomainPath} />}
+        {selectedFolder && <>
+          <div className={classes.crumbContainer}>
+            <FolderCrumbs selectedFolderPath={selectedFolderPath} selectPath={handleSelectFolder} className={classes.crumbs} />
+            <Button variant="contained" color="secondary" startIcon={<DeleteIcon />} onClick={handleDeleteFolder}>Delete Folder</Button>
+          </div>
+          {acls.length > 0 && <AccessControl acls={acls} variant="wide" />}
+          <FolderContent folder={selectedFolder} handleSelect={setSelectedDomainPath} selected={selectedDomainPath} />
+        </>}
       </Grid>
       {selectedDomain && <Grid item xs={12} md={4} xl={3} className={classes.column}>
         <DomainInfo domain={selectedDomain} />
       </Grid>}
     </Grid>
+    <Dialog open={deleteFolder.length > 0} onClose={() => setDeleteFolder("")}>
+      <DialogTitle>Delete Confirmation</DialogTitle>
+      <DialogContent>
+        <DialogContentText>Do you really want to delete <strong>{deleteFolder}</strong>?</DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setDeleteFolder("")} color="primary" autoFocus>
+          Cancel
+        </Button>
+        <Button onClick={handleConfirmDeleteDomain} color="secondary">
+          Delete
+        </Button>
+      </DialogActions>
+    </Dialog>
+    <Snackbar open={errorMessage.length > 0} autoHideDuration={5000} onClose={handleErrorMessage}>
+      <Alert onClose={handleErrorMessage} severity="error" variant="filled">{errorMessage}</Alert>
+    </Snackbar>
   </>);
 }

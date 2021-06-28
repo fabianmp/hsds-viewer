@@ -12,6 +12,7 @@ import requests
 from flask import Flask, abort, json, request, send_from_directory, session
 from flask_caching import Cache
 from h5pyd import Config, Dataset, File, Folder, Group, getServerInfo
+from werkzeug.routing import PathConverter
 
 from _version import __version__
 from authentication import configure_authentication, require_role
@@ -53,6 +54,34 @@ def get_credentials() -> Dict[str, str]:
         return {"username": username, "password": credentials.get(username, "")}
 
 
+class HsdsFolderPathConverter(PathConverter):
+    @classmethod
+    def to_python(cls, value: str):
+        if not value.startswith("/"):
+            value = f"/{value}"
+        if not value.endswith("/"):
+            value = f"{value}/"
+        return value
+
+    @classmethod
+    def to_url(cls, value: str):
+        return value.strip("/")
+
+
+class HsdsDomainPathConverter(PathConverter):
+    def to_python(self, value: str):
+        if not value.startswith("/"):
+            value = f"/{value}"
+        return value
+
+    def to_url(self, value: str):
+        return value.strip("/")
+
+
+app.url_map.converters["hsds_folder"] = HsdsFolderPathConverter
+app.url_map.converters["hsds_domain"] = HsdsDomainPathConverter
+
+
 @app.route("/")
 def index():
     return send_from_directory("static", "index.html")
@@ -87,6 +116,7 @@ def info() -> Dict[str, Any]:
 @cache.memoize(60)
 def get_folder_content_from_hsds(path, username):
     result = {
+        "path": path,
         "subfolders": [],
         "domains": [],
     }
@@ -120,23 +150,17 @@ def get_folder_content_from_hsds(path, username):
     return result
 
 
-@app.route("/api/folder/", defaults={"path": ""})
-@app.route("/api/folder/<path:path>")
+@app.route("/api/folder/", defaults={"path": "/"})
+@app.route("/api/folder/<hsds_folder:path>")
 def get_folder(path: str) -> List[Dict[str, Any]]:
-    path = f"/{path}"
-    if not path.endswith("/"):
-        path = f"{path}/"
-
+    app.logger.info(f"get_folder {path}")
     result = get_folder_content_from_hsds(path, get_username())
     return json.dumps(result)
 
 
-@app.route("/api/folder/<path:path>/acl")
+@app.route("/api/folder/<hsds_folder:path>/acl")
 def get_folder_acl(path: str) -> List[Dict[str, Any]]:
-    path = f"/{path}"
-    if not path.endswith("/"):
-        path = f"{path}/"
-
+    app.logger.info(f"get_folder_acl {path}")
     with Folder(path, mode="r", **get_credentials()) as folder:
         if path != "/":
             try:
@@ -145,6 +169,41 @@ def get_folder_acl(path: str) -> List[Dict[str, Any]]:
                 acls = []
         folder.close()
     return json.dumps(acls)
+
+
+def delete_folder_recursively(path: str, username: str):
+    with Folder(path, mode="w", **get_credentials()) as folder:
+        file_names = list(folder)
+        for file_name in file_names:
+            try:
+                if folder[file_name]["class"] == "folder":
+                    delete_folder_recursively(f"{path}{file_name}/", username)
+                del folder[file_name]
+            except IOError as error:
+                if error.errno in (401, 403):
+                    abort(error.errno)
+        folder.close()
+    cache.delete_memoized(get_folder_content_from_hsds, path, username)
+
+
+@app.route("/api/folder/<hsds_folder:path>", methods=["DELETE"])
+def delete_folder(path: str):
+    app.logger.info(f"delete_folder {path}")
+    username = get_username()
+    delete_folder_recursively(path, username)
+
+    parent_path = HsdsFolderPathConverter.to_python(f"{os.path.dirname(path[:-1])}")
+    folder_name = f"{os.path.basename(path[:-1])}"
+    with Folder(parent_path, mode="w", **get_credentials()) as folder:
+        try:
+            del folder[folder_name]
+        except IOError as error:
+            if error.errno in (401, 403):
+                abort(error.errno)
+        folder.close()
+    cache.delete_memoized(get_folder_content_from_hsds, parent_path, username)
+
+    return {}
 
 
 def calculate_chunks(shape: tuple, chunks: tuple):
@@ -192,7 +251,7 @@ def get_group_info(group: Union[Group, Dataset]) -> Dict[str, Any]:
 @cache.memoize(60)
 def get_file_content_from_hsds(path, username):
     try:
-        with File(f"/{path}", "r", **get_credentials()) as file:
+        with File(path, "r", **get_credentials()) as file:
             groups = [get_group_info(file)]
             info = {
                 "domain": os.path.dirname(file.filename),
@@ -213,8 +272,8 @@ def get_file_content_from_hsds(path, username):
         elif error.errno in (401, 403):  # Unauthorized
             info = {
                 "unauthorized": True,
-                "domain": os.path.dirname(f"/{path}"),
-                "filename": os.path.basename(f"/{path}"),
+                "domain": os.path.dirname(path),
+                "filename": os.path.basename(path),
                 "md5_sum": "<unauthorized>",
                 "created": 0,
                 "modified": 0,
@@ -229,16 +288,18 @@ def get_file_content_from_hsds(path, username):
     return info
 
 
-@app.route("/api/domain/<path:path>")
+@app.route("/api/domain/<hsds_domain:path>")
 def get_domain(path: str) -> Dict[str, Any]:
+    app.logger.info(f"get_domain {path}")
     info = get_file_content_from_hsds(path, get_username())
     return json.dumps(info)
 
 
-@app.route("/api/domain/<path:path>/acl")
+@app.route("/api/domain/<hsds_domain:path>/acl")
 def get_domain_acl(path: str) -> Dict[str, Any]:
+    app.logger.info(f"get_domain_acl {path}")
     try:
-        with File(f"/{path}", "r", **get_credentials()) as file:
+        with File(path, "r", **get_credentials()) as file:
             acls = file.getACLs()
     except IOError as error:
         if error.errno in (404, 410):  # Not Found
@@ -248,6 +309,27 @@ def get_domain_acl(path: str) -> Dict[str, Any]:
         else:
             raise
     return json.dumps(acls)
+
+
+@app.route("/api/domain/<hsds_domain:path>", methods=["DELETE"])
+def delete_domain(path: str):
+    app.logger.info(f"delete_domain {path}")
+    folder_name = os.path.dirname(path)
+    file_name = os.path.basename(path)
+    if not folder_name.endswith("/"):
+        folder_name = f"{folder_name}/"
+
+    with Folder(folder_name, mode="w", **get_credentials()) as folder:
+        if file_name not in folder:
+            abort(404)
+        try:
+            del folder[file_name]
+        except IOError as error:
+            if error.errno in (401, 403):
+                abort(error.errno)
+        folder.close()
+    cache.delete_memoized(get_folder_content_from_hsds, folder_name, get_username())
+    return {}
 
 
 @app.route("/api/current_user", methods=["GET", "POST"])
@@ -289,7 +371,9 @@ if "FEATURE_NODE_INFO_ENABLED" in os.environ:
         nodes = []
         for url, port in product(about["dn_urls"], (5101, 6101)):
             parsed = urlparse(url)
-            info = requests.get(f"{parsed.scheme}://{parsed.hostname}:{port}/info").json()
+            info = requests.get(
+                f"{parsed.scheme}://{parsed.hostname}:{port}/info"
+            ).json()
             nodes.append(info)
         return json.dumps(nodes)
 

@@ -1,5 +1,12 @@
+import Button from '@material-ui/core/Button';
+import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import DialogTitle from '@material-ui/core/DialogTitle';
 import IconButton from '@material-ui/core/IconButton';
 import Paper from "@material-ui/core/Paper";
+import Snackbar from '@material-ui/core/Snackbar';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
@@ -9,16 +16,20 @@ import TableFooter from "@material-ui/core/TableFooter";
 import TableHead from "@material-ui/core/TableHead";
 import TablePagination from '@material-ui/core/TablePagination';
 import TableRow from "@material-ui/core/TableRow";
+import Tooltip from "@material-ui/core/Tooltip";
+import DeleteIcon from '@material-ui/icons/Delete';
 import FirstPageIcon from '@material-ui/icons/FirstPage';
 import KeyboardArrowLeft from '@material-ui/icons/KeyboardArrowLeft';
 import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
 import LastPageIcon from '@material-ui/icons/LastPage';
+import Alert from '@material-ui/lab/Alert';
 import prettyBytes from "pretty-bytes";
 import React, { useEffect } from "react";
+import { mutate } from "swr";
 import { Folder, NodeInfo } from '../Api';
 
 
-const useStyles = makeStyles((theme: Theme) =>
+const usePaginationStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {
       flexShrink: 0,
@@ -35,7 +46,7 @@ interface PaginationActionsProps {
 }
 
 function PaginationActions({ count, page, rowsPerPage, onChangePage }: PaginationActionsProps) {
-  const classes = useStyles();
+  const classes = usePaginationStyles();
   const lastPage = Math.ceil(count / rowsPerPage) - 1;
 
   return (
@@ -57,6 +68,19 @@ function PaginationActions({ count, page, rowsPerPage, onChangePage }: Paginatio
 }
 
 
+const useStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    actions: {
+      flexShrink: 1,
+      textAlign: "right",
+    },
+    deleteButton: {
+      padding: 0,
+    },
+  }),
+);
+
+
 interface Props {
   folder: Folder
   selected: string
@@ -64,9 +88,12 @@ interface Props {
 }
 
 export default function FolderContent({ folder, handleSelect, selected }: Props) {
+  const classes = useStyles();
   const rowHeight = 33;
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(20);
+  const [deleteDomain, setDeleteDomain] = React.useState("");
+  const [errorMessage, setErrorMessage] = React.useState("");
 
   const visibleDomains = folder.domains.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
   const emptyRows = rowsPerPage - Math.min(rowsPerPage, folder.domains.length - page * rowsPerPage);
@@ -82,6 +109,32 @@ export default function FolderContent({ folder, handleSelect, selected }: Props)
     setPage(0);
   };
 
+  const handleErrorMessage = () => {
+    setErrorMessage("");
+  }
+
+  const handleDeleteDomain = (e: React.MouseEvent, path: string) => {
+    e.stopPropagation();
+    setDeleteDomain(path);
+  }
+
+  const handleConfirmDeleteDomain = async () => {
+    if (deleteDomain.length === 0) {
+      return
+    }
+    const response = await fetch(`/api/domain${deleteDomain}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    if (!response.ok && response.status === 403) {
+      setErrorMessage(`You are not allowed to delete ${deleteDomain}`);
+    };
+    mutate(`/api/folder${folder.path}`);
+    setDeleteDomain("");
+  };
+
   return (<>
     <TableContainer component={Paper}>
       <Table size="small">
@@ -92,6 +145,7 @@ export default function FolderContent({ folder, handleSelect, selected }: Props)
             <TableCell><b>Size</b></TableCell>
             <TableCell><b>Created</b></TableCell>
             <TableCell><b>Modified</b></TableCell>
+            <TableCell className={classes.actions}></TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -102,6 +156,13 @@ export default function FolderContent({ folder, handleSelect, selected }: Props)
               <TableCell>{prettyBytes(domain.total_size)}</TableCell>
               <TableCell>{new Date(domain.created).toLocaleString()}</TableCell>
               <TableCell>{new Date(domain.modified).toLocaleString()}</TableCell>
+              <TableCell className={classes.actions}>
+                <Tooltip title="Delete file">
+                  <IconButton color="secondary" className={classes.deleteButton} onClick={(e) => handleDeleteDomain(e, domain.path)}>
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </TableCell>
             </TableRow>)}
           {emptyRows > 0 && (
             <TableRow style={{ height: rowHeight * emptyRows }}>
@@ -118,5 +179,22 @@ export default function FolderContent({ folder, handleSelect, selected }: Props)
         </TableFooter>
       </Table>
     </TableContainer>
+    <Dialog open={deleteDomain.length > 0} onClose={() => setDeleteDomain("")}>
+      <DialogTitle>Delete Confirmation</DialogTitle>
+      <DialogContent>
+        <DialogContentText>Do you really want to delete <strong>{deleteDomain}</strong>?</DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setDeleteDomain("")} color="primary" autoFocus>
+          Cancel
+        </Button>
+        <Button onClick={handleConfirmDeleteDomain} color="secondary">
+          Delete
+        </Button>
+      </DialogActions>
+    </Dialog>
+    <Snackbar open={errorMessage.length > 0} autoHideDuration={5000} onClose={handleErrorMessage}>
+      <Alert onClose={handleErrorMessage} severity="error" variant="filled">{errorMessage}</Alert>
+    </Snackbar>
   </>);
 }

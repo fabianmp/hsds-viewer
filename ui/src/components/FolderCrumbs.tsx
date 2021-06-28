@@ -21,11 +21,12 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 interface Props {
+  className?: string
   selectedFolderPath: string
   selectPath: (path: string) => void
 }
 
-export default function FolderCrumbs({ selectPath, selectedFolderPath }: Props) {
+export default function FolderCrumbs({ selectPath, selectedFolderPath, className }: Props) {
   const history = useHistory();
   const classes = useStyles();
 
@@ -37,7 +38,7 @@ export default function FolderCrumbs({ selectPath, selectedFolderPath }: Props) 
     history.push(nodeId);
   };
 
-  return (<Breadcrumbs aria-label="breadcrumb">
+  return (<Breadcrumbs className={className}>
     {breadCrumbs.slice(0, -1).map(([name, path]) =>
       <Link to={path} key={path} component={MaterialLink} onClick={() => handleSelect(path)}
         className={classes.crumb}><FolderIcon />{name}</Link>)}

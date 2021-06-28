@@ -33,6 +33,7 @@ export interface ACL {
 }
 
 export interface Folder {
+  path: string
   subfolders: NodeInfo[]
   domains: NodeInfo[]
 }
