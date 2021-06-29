@@ -122,11 +122,11 @@ export default function HsdsData() {
     </Drawer>
     <Grid container>
       <Grid item xs={12} md={8} xl={9} className={classes.column}>
-        {selectedFolder && <>
-          <div className={classes.crumbContainer}>
+        {selectedFolderPath && <div className={classes.crumbContainer}>
             <FolderCrumbs selectedFolderPath={selectedFolderPath} selectPath={handleSelectFolder} className={classes.crumbs} />
             <Button variant="contained" color="secondary" startIcon={<DeleteIcon />} onClick={handleDeleteFolder}>Delete Folder</Button>
-          </div>
+          </div>}
+        {selectedFolder && <>
           {acls.length > 0 && <AccessControl acls={acls} variant="wide" />}
           <FolderContent folder={selectedFolder} handleSelect={setSelectedDomainPath} selected={selectedDomainPath} />
         </>}
