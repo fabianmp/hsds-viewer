@@ -7,6 +7,7 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import Drawer from '@material-ui/core/Drawer';
 import Grid from '@material-ui/core/Grid';
 import LinearProgress from '@material-ui/core/LinearProgress';
+import Paper from '@material-ui/core/Paper';
 import Snackbar from '@material-ui/core/Snackbar';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -14,8 +15,8 @@ import Alert from '@material-ui/lab/Alert';
 import clsx from 'clsx';
 import React, { useEffect, useState } from 'react';
 import useSWR, { mutate } from 'swr';
-import { ACL, Domain, Folder } from '../Api';
-import { useServerInfo } from '../Hooks';
+import { ACL, Folder } from '../Api';
+import { useDomain, useFolder, useServerInfo } from '../Hooks';
 import AccessControl from './AccessControl';
 import DomainInfo from './DomainInfo';
 import FolderContent from './FolderContent';
@@ -46,7 +47,13 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     crumbs: {
       flexGrow: 1
-    }
+    },
+    loading: {
+      padding: theme.spacing(3),
+    },
+    progress: {
+      marginTop: theme.spacing(2),
+    },
   }),
 );
 
@@ -54,8 +61,8 @@ export default function HsdsData() {
   const [selectedFolderPath, setSelectedFolderPath] = useState<string>("");
   const [selectedDomainPath, setSelectedDomainPath] = useState<string>("");
   const { data: rootFolder = undefined } = useSWR<Folder>('/api/folder/');
-  const { data: selectedFolder = null } = useSWR<Folder>(selectedFolderPath ? `/api/folder${selectedFolderPath}/` : null)
-  const { data: selectedDomain = null } = useSWR<Domain>(selectedDomainPath ? `/api/domain${selectedDomainPath}` : null)
+  const { folder: selectedFolder, isLoading: isLoadingFolder } = useFolder(selectedFolderPath);
+  const { domain: selectedDomain, isLoading: isLoadingDomain } = useDomain(selectedDomainPath);
   const { data: acls = [] } = useSWR<ACL[]>(selectedFolderPath ? `/api/folder${selectedFolderPath}/acl` : [])
   const info = useServerInfo();
   const [deleteFolder, setDeleteFolder] = React.useState("");
@@ -123,10 +130,16 @@ export default function HsdsData() {
           {acls.length > 0 && <AccessControl acls={acls} variant="wide" />}
           <FolderContent folder={selectedFolder} handleSelect={setSelectedDomainPath} selected={selectedDomainPath} />
         </>}
+        {selectedFolderPath && isLoadingFolder && <Paper className={classes.loading}>
+          Loading contents of <strong>{selectedFolderPath}</strong>...
+          <LinearProgress className={classes.progress} /></Paper>}
       </Grid>
-      {selectedDomain && <Grid item xs={12} md={4} xl={3} className={classes.column}>
-        <DomainInfo domain={selectedDomain} />
-      </Grid>}
+      <Grid item xs={12} md={4} xl={3} className={classes.column}>
+        {selectedDomain && <DomainInfo domain={selectedDomain} />}
+        {selectedDomainPath && isLoadingDomain && <Paper className={classes.loading}>
+          Loading contents of <strong>{selectedDomainPath}</strong>...
+          <LinearProgress className={classes.progress} /></Paper>}
+      </Grid>
     </Grid>
     <Dialog open={deleteFolder.length > 0 && !deleteInProgress} onClose={() => setDeleteFolder("")}>
       <DialogTitle>Delete Confirmation</DialogTitle>

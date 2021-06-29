@@ -1,5 +1,5 @@
 import useSWR from "swr";
-import { ServerInfo } from "./Api";
+import { Domain, Folder, ServerInfo } from "./Api";
 
 export function useServerInfo() {
     const { data: info = {
@@ -12,4 +12,20 @@ export function useServerInfo() {
     } } = useSWR<ServerInfo>("/api/info");
 
     return info;
+}
+
+export function useFolder(path?: string) {
+    const { data: folder = null, error } = useSWR<Folder>(path ? `/api/folder${path}/` : null)
+    return {
+        folder,
+        isLoading: !folder && !error
+    };
+}
+
+export function useDomain(path?: string) {
+    const { data: domain = null, error } = useSWR<Domain>(path ? `/api/domain${path}` : null)
+    return {
+        domain,
+        isLoading: !domain && !error
+    };
 }
