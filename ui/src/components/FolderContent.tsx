@@ -5,6 +5,7 @@ import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import IconButton from '@material-ui/core/IconButton';
+import LinearProgress from '@material-ui/core/LinearProgress';
 import Paper from "@material-ui/core/Paper";
 import Snackbar from '@material-ui/core/Snackbar';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
@@ -94,6 +95,7 @@ export default function FolderContent({ folder, handleSelect, selected }: Props)
   const [rowsPerPage, setRowsPerPage] = React.useState(20);
   const [deleteDomain, setDeleteDomain] = React.useState("");
   const [errorMessage, setErrorMessage] = React.useState("");
+  const [deleteInProgress, setDeleteInProgress] = React.useState(false);
 
   const visibleDomains = folder.domains.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
   const emptyRows = rowsPerPage - Math.min(rowsPerPage, folder.domains.length - page * rowsPerPage);
@@ -122,6 +124,7 @@ export default function FolderContent({ folder, handleSelect, selected }: Props)
     if (deleteDomain.length === 0) {
       return
     }
+    setDeleteInProgress(true);
     const response = await fetch(`/api/domain${deleteDomain}`, {
       method: 'DELETE',
       headers: {
@@ -133,6 +136,7 @@ export default function FolderContent({ folder, handleSelect, selected }: Props)
     };
     mutate(`/api/folder${folder.path}`);
     setDeleteDomain("");
+    setDeleteInProgress(false);
   };
 
   return (<>
@@ -179,7 +183,7 @@ export default function FolderContent({ folder, handleSelect, selected }: Props)
         </TableFooter>
       </Table>
     </TableContainer>
-    <Dialog open={deleteDomain.length > 0} onClose={() => setDeleteDomain("")}>
+    <Dialog open={deleteDomain.length > 0 && !deleteInProgress} onClose={() => setDeleteDomain("")}>
       <DialogTitle>Delete Confirmation</DialogTitle>
       <DialogContent>
         <DialogContentText>Do you really want to delete <strong>{deleteDomain}</strong>?</DialogContentText>
@@ -192,6 +196,13 @@ export default function FolderContent({ folder, handleSelect, selected }: Props)
           Delete
         </Button>
       </DialogActions>
+    </Dialog>
+    <Dialog open={deleteInProgress}>
+      <DialogTitle>Please wait</DialogTitle>
+      <DialogContent>
+        <DialogContentText>Deleting folder <strong>{deleteDomain}</strong>...</DialogContentText>
+        <DialogContentText><LinearProgress /></DialogContentText>
+      </DialogContent>
     </Dialog>
     <Snackbar open={errorMessage.length > 0} autoHideDuration={5000} onClose={handleErrorMessage}>
       <Alert onClose={handleErrorMessage} severity="error" variant="filled">{errorMessage}</Alert>

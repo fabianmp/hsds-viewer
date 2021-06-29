@@ -6,6 +6,7 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import Drawer from '@material-ui/core/Drawer';
 import Grid from '@material-ui/core/Grid';
+import LinearProgress from '@material-ui/core/LinearProgress';
 import Snackbar from '@material-ui/core/Snackbar';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -59,6 +60,7 @@ export default function HsdsData() {
   const info = useServerInfo();
   const [deleteFolder, setDeleteFolder] = React.useState("");
   const [errorMessage, setErrorMessage] = React.useState("");
+  const [deleteInProgress, setDeleteInProgress] = React.useState(false);
 
   useEffect(() => {
     mutate(`/api/folder${selectedFolderPath}/`);
@@ -85,6 +87,7 @@ export default function HsdsData() {
     if (deleteFolder.length === 0) {
       return
     }
+    setDeleteInProgress(true)
     const response = await fetch(`/api/folder${deleteFolder}`, {
       method: 'DELETE',
       headers: {
@@ -102,6 +105,7 @@ export default function HsdsData() {
     setDeleteFolder("");
     setSelectedDomainPath("");
     setSelectedFolderPath(folders.slice(0, -1).join('/'));
+    setDeleteInProgress(false);
   };
 
   const classes = useStyles();
@@ -124,7 +128,7 @@ export default function HsdsData() {
         <DomainInfo domain={selectedDomain} />
       </Grid>}
     </Grid>
-    <Dialog open={deleteFolder.length > 0} onClose={() => setDeleteFolder("")}>
+    <Dialog open={deleteFolder.length > 0 && !deleteInProgress} onClose={() => setDeleteFolder("")}>
       <DialogTitle>Delete Confirmation</DialogTitle>
       <DialogContent>
         <DialogContentText>Do you really want to delete <strong>{deleteFolder}</strong>?</DialogContentText>
@@ -137,6 +141,13 @@ export default function HsdsData() {
           Delete
         </Button>
       </DialogActions>
+    </Dialog>
+    <Dialog open={deleteInProgress}>
+      <DialogTitle>Please wait</DialogTitle>
+      <DialogContent>
+        <DialogContentText>Deleting folder <strong>{deleteFolder}</strong>...</DialogContentText>
+        <DialogContentText><LinearProgress /></DialogContentText>
+      </DialogContent>
     </Dialog>
     <Snackbar open={errorMessage.length > 0} autoHideDuration={5000} onClose={handleErrorMessage}>
       <Alert onClose={handleErrorMessage} severity="error" variant="filled">{errorMessage}</Alert>
