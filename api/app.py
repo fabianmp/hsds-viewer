@@ -174,7 +174,8 @@ def delete_folder_recursively(path: str, username: str):
         file_names = list(folder)
         for file_name in file_names:
             try:
-                if folder[file_name]["class"] == "folder":
+                item = folder[file_name]
+                if item is not None and item["class"] == "folder":
                     delete_folder_recursively(f"{path}{file_name}/", username)
                 del folder[file_name]
             except IOError as error:
