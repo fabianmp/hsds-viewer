@@ -6,6 +6,7 @@ import FolderIcon from '@material-ui/icons/Folder';
 import FolderOpenIcon from '@material-ui/icons/FolderOpen';
 import React from "react";
 import { Link, useHistory } from 'react-router-dom';
+import { useSelectedFolderPath } from "../Hooks";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -22,19 +23,17 @@ const useStyles = makeStyles((theme: Theme) =>
 
 interface Props {
   className?: string
-  selectedFolderPath: string
-  selectPath: (path: string) => void
 }
 
-export default function FolderCrumbs({ selectPath, selectedFolderPath, className }: Props) {
+export default function FolderCrumbs({ className }: Props) {
   const history = useHistory();
   const classes = useStyles();
+  const selectedFolderPath = useSelectedFolderPath();
 
   const folderNames = selectedFolderPath.replace(/^\/?(.*?)\/?$/, "$1").split("/");
   const breadCrumbs = folderNames.map((name, index) => [name, `/${folderNames.slice(0, index + 1).join("/")}/`]);
 
   const handleSelect = (nodeId: string) => {
-    selectPath(nodeId);
     history.push(nodeId);
   };
 

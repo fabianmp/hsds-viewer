@@ -13,10 +13,11 @@ import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import DeleteIcon from '@material-ui/icons/Delete';
 import Alert from '@material-ui/lab/Alert';
 import clsx from 'clsx';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
+import { useHistory } from 'react-router';
 import useSWR, { mutate } from 'swr';
 import { ACL, Folder } from '../Api';
-import { useDomain, useFolder, useServerInfo } from '../Hooks';
+import { useDomain, useFolder, useSelectedDomainPath, useSelectedFolderPath, useServerInfo } from '../Hooks';
 import AccessControl from './AccessControl';
 import DomainInfo from './DomainInfo';
 import FolderContent from './FolderContent';
@@ -58,28 +59,24 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 export default function HsdsData() {
-  const [selectedFolderPath, setSelectedFolderPath] = useState<string>("");
-  const [selectedDomainPath, setSelectedDomainPath] = useState<string>("");
+  const selectedFolderPath = useSelectedFolderPath();
+  const selectedDomainPath = useSelectedDomainPath();
   const { data: rootFolder = undefined } = useSWR<Folder>('/api/folder/');
   const { folder: selectedFolder, isLoading: isLoadingFolder } = useFolder(selectedFolderPath);
   const { domain: selectedDomain, isLoading: isLoadingDomain } = useDomain(selectedDomainPath);
-  const { data: acls = [] } = useSWR<ACL[]>(selectedFolderPath ? `/api/folder${selectedFolderPath}/acl` : [])
+  const { data: acls = [] } = useSWR<ACL[]>(selectedFolderPath !== "/" ? `/api/folder${selectedFolderPath}acl` : [])
   const info = useServerInfo();
   const [deleteFolder, setDeleteFolder] = React.useState("");
   const [errorMessage, setErrorMessage] = React.useState("");
   const [deleteInProgress, setDeleteInProgress] = React.useState(false);
+  const history = useHistory();
 
   useEffect(() => {
-    mutate(`/api/folder${selectedFolderPath}/`);
-    mutate(`/api/folder${selectedFolderPath}/acl`);
+    mutate(`/api/folder${selectedFolderPath}`);
+    mutate(`/api/folder${selectedFolderPath}acl`);
     mutate(`/api/domain${selectedDomainPath}`);
     mutate(`/api/domain${selectedDomainPath}/acl`);
   }, [info.username, selectedFolderPath, selectedDomainPath])
-
-  const handleSelectFolder = (path: string) => {
-    setSelectedFolderPath(path);
-    setSelectedDomainPath("");
-  }
 
   const handleErrorMessage = () => {
     setErrorMessage("");
@@ -105,30 +102,29 @@ export default function HsdsData() {
       setErrorMessage(`You are not allowed to delete ${deleteFolder}`);
     };
 
-    const folders = deleteFolder.split('/');
-    for (let i = 1; i < folders.length; ++i) {
-      mutate(`/api/folder${folders.slice(0, i).join('/')}`)
+    const folders = deleteFolder.split('/').slice(0, -2);
+    for (let i = 1; i <= folders.length; ++i) {
+      mutate(`/api/folder${folders.slice(0, i).concat('').join('/')}`);
     }
     setDeleteFolder("");
-    setSelectedDomainPath("");
-    setSelectedFolderPath(folders.slice(0, -1).join('/'));
+    history.push(folders.concat('').join('/'));
     setDeleteInProgress(false);
   };
 
   const classes = useStyles();
   return (<>
     <Drawer variant="permanent" className={classes.drawer} classes={{ paper: clsx(classes.drawer, classes.drawerPaper) }} open>
-      {rootFolder && <FolderTree folder={rootFolder} selectedFolderPath={selectedFolderPath} handleNodeSelect={handleSelectFolder} />}
+      {rootFolder && <FolderTree folder={rootFolder} />}
     </Drawer>
     <Grid container>
       <Grid item xs={12} md={8} xl={9} className={classes.column}>
         {selectedFolderPath && <div className={classes.crumbContainer}>
-            <FolderCrumbs selectedFolderPath={selectedFolderPath} selectPath={handleSelectFolder} className={classes.crumbs} />
-            <Button variant="contained" color="secondary" startIcon={<DeleteIcon />} onClick={handleDeleteFolder}>Delete Folder</Button>
-          </div>}
+          <FolderCrumbs className={classes.crumbs} />
+          <Button variant="contained" color="secondary" startIcon={<DeleteIcon />} onClick={handleDeleteFolder}>Delete Folder</Button>
+        </div>}
         {selectedFolder && <>
           {acls.length > 0 && <AccessControl acls={acls} variant="wide" />}
-          <FolderContent folder={selectedFolder} handleSelect={setSelectedDomainPath} selected={selectedDomainPath} />
+          <FolderContent folder={selectedFolder} />
         </>}
         {selectedFolderPath && isLoadingFolder && <Paper className={classes.loading}>
           Loading contents of <strong>{selectedFolderPath}</strong>...

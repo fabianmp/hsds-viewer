@@ -11,6 +11,7 @@ import React, { ChangeEvent, useState } from "react";
 import { useHistory } from 'react-router-dom';
 import { mutate } from 'swr';
 import { Folder, NodeInfo } from '../Api';
+import { useSelectedFolderPath } from '../Hooks';
 import TreeFolder from "./TreeFolder";
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -28,13 +29,12 @@ const useStyles = makeStyles((theme: Theme) =>
 
 interface Props {
   folder: Folder,
-  selectedFolderPath: string,
-  handleNodeSelect: (path: string) => void
 }
 
-export default function FolderTree({ folder, selectedFolderPath, handleNodeSelect }: Props) {
+export default function FolderTree({ folder }: Props) {
   const classes = useStyles();
   const history = useHistory();
+  const selectedFolderPath = useSelectedFolderPath();
 
   const [expanded, setExpanded] = useState<string[]>([]);
 
@@ -44,16 +44,24 @@ export default function FolderTree({ folder, selectedFolderPath, handleNodeSelec
     }
   }
 
+  if (selectedFolderPath !== "/" && expanded.length === 0) {
+    let expandNodes: string[] = []
+    const folders = selectedFolderPath.split('/');
+    for (let i = 2; i < folders.length; ++i) {
+      expandNodes.splice(expandNodes.length, 0, `${folders.slice(0, i).join('/')}/`);
+    }
+    setExpanded(expandNodes);
+  }
+
   const handleSelect = (event: ChangeEvent<{}>, nodeId: string) => {
-    handleNodeSelect(nodeId);
     history.push(nodeId);
   };
 
   const reloadFolders = () => {
     mutate(`/api/folder/`);
     expanded.forEach(x => {
-      mutate(`/api/folder${x}/`);
-      mutate(`/api/folder${x}/acl`);
+      mutate(`/api/folder${x}`);
+      mutate(`/api/folder${x}acl`);
     })
   }
 
@@ -70,7 +78,7 @@ export default function FolderTree({ folder, selectedFolderPath, handleNodeSelec
       defaultExpandIcon={<FolderIcon />}
       defaultEndIcon={<FolderIcon />}>
       {folder?.subfolders.map((folder: NodeInfo) => <TreeFolder key={folder.path} node={folder}
-        selectedNode={selectedFolderPath} expandedNodes={expanded} expandNode={expandNode} />)}
+        expandedNodes={expanded} expandNode={expandNode} />)}
     </TreeView>
   </>);
 }

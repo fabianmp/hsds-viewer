@@ -1,5 +1,16 @@
+import { useRouteMatch } from "react-router-dom";
 import useSWR from "swr";
 import { Domain, Folder, ServerInfo } from "./Api";
+
+export function useSelectedFolderPath() {
+    const { url } = useRouteMatch();
+    return url.endsWith("/") ? url : url.split("/").slice(0, -1).concat("").join("/");
+}
+
+export function useSelectedDomainPath() {
+    const { url } = useRouteMatch();
+    return url.endsWith("/") ? "" : url;
+}
 
 export function useServerInfo() {
     const { data: info = {

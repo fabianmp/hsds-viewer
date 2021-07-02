@@ -3,6 +3,7 @@ import TreeItem from "@material-ui/lab/TreeItem";
 import React from "react";
 import useSWR from 'swr';
 import { Folder as ApiFolder, NodeInfo } from '../Api';
+import { useSelectedFolderPath } from '../Hooks';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -15,13 +16,13 @@ const useStyles = makeStyles((theme: Theme) =>
 
 interface Props {
   node: NodeInfo,
-  selectedNode: string
   expandedNodes: string[]
   expandNode: (nodeId: string) => void
 }
 
-export default function TreeFolder({ node, selectedNode, expandedNodes, expandNode }: Props) {
+export default function TreeFolder({ node, expandedNodes, expandNode }: Props) {
   const classes = useStyles();
+  const selectedNode = useSelectedFolderPath();
   const isSelected = selectedNode === node.path;
   const isExpanded = expandedNodes.includes(node.path);
   const { data: folder = null } = useSWR<ApiFolder>((isSelected || isExpanded) ? `/api/folder${node.path}` : null)
@@ -33,7 +34,7 @@ export default function TreeFolder({ node, selectedNode, expandedNodes, expandNo
   return (
     <TreeItem nodeId={node.path} label={node.name} className={classes.treeItem}>
       {folder?.subfolders.map((folder: NodeInfo) => <TreeFolder key={folder.path} node={folder}
-        selectedNode={selectedNode} expandedNodes={expandedNodes} expandNode={expandNode} />)}
+        expandedNodes={expandedNodes} expandNode={expandNode} />)}
     </TreeItem>
   );
 }

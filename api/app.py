@@ -116,7 +116,7 @@ def info() -> Dict[str, Any]:
 @cache.memoize(60)
 def get_folder_content_from_hsds(path, username):
     result = {
-        "path": path,
+        "path": HsdsFolderPathConverter.to_python(path),
         "subfolders": [],
         "domains": [],
     }
@@ -126,7 +126,7 @@ def get_folder_content_from_hsds(path, username):
             if item["class"] == "folder":
                 result["subfolders"].append(
                     {
-                        "path": item["name"],
+                        "path": HsdsFolderPathConverter.to_python(item["name"]),
                         "name": name,
                         "type": item["class"],
                         "owner": item["owner"],

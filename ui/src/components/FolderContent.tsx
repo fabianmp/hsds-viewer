@@ -26,8 +26,10 @@ import LastPageIcon from '@material-ui/icons/LastPage';
 import Alert from '@material-ui/lab/Alert';
 import prettyBytes from "pretty-bytes";
 import React, { useEffect } from "react";
+import { useHistory } from 'react-router';
 import { mutate } from "swr";
 import { Folder, NodeInfo } from '../Api';
+import { useSelectedDomainPath, useSelectedFolderPath } from '../Hooks';
 
 
 const usePaginationStyles = makeStyles((theme: Theme) =>
@@ -84,11 +86,9 @@ const useStyles = makeStyles((theme: Theme) =>
 
 interface Props {
   folder: Folder
-  selected: string
-  handleSelect: (path: string) => void
 }
 
-export default function FolderContent({ folder, handleSelect, selected }: Props) {
+export default function FolderContent({ folder }: Props) {
   const classes = useStyles();
   const rowHeight = 33;
   const [page, setPage] = React.useState(0);
@@ -96,6 +96,9 @@ export default function FolderContent({ folder, handleSelect, selected }: Props)
   const [deleteDomain, setDeleteDomain] = React.useState("");
   const [errorMessage, setErrorMessage] = React.useState("");
   const [deleteInProgress, setDeleteInProgress] = React.useState(false);
+  const history = useHistory();
+  const selectedFolderPath = useSelectedFolderPath();
+  const selectedDomainPath = useSelectedDomainPath();
 
   const visibleDomains = folder.domains.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
   const emptyRows = rowsPerPage - Math.min(rowsPerPage, folder.domains.length - page * rowsPerPage);
@@ -135,8 +138,13 @@ export default function FolderContent({ folder, handleSelect, selected }: Props)
       setErrorMessage(`You are not allowed to delete ${deleteDomain}`);
     };
     mutate(`/api/folder${folder.path}`);
+    history.push(selectedFolderPath);
     setDeleteDomain("");
     setDeleteInProgress(false);
+  };
+
+  const handleSelectDomain = (path: string) => {
+    history.push(path);
   };
 
   return (<>
@@ -154,7 +162,7 @@ export default function FolderContent({ folder, handleSelect, selected }: Props)
         </TableHead>
         <TableBody>
           {visibleDomains.map((domain: NodeInfo) =>
-            <TableRow key={domain.name} hover onClick={() => handleSelect(domain.path)} role="checkbox" selected={domain.path === selected}>
+            <TableRow key={domain.name} hover onClick={() => handleSelectDomain(domain.path)} role="checkbox" selected={domain.path === selectedDomainPath}>
               <TableCell component="th" scope="row">{domain.name}</TableCell>
               <TableCell>{domain.owner}</TableCell>
               <TableCell>{prettyBytes(domain.total_size)}</TableCell>
