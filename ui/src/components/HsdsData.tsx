@@ -61,10 +61,11 @@ const useStyles = makeStyles((theme: Theme) =>
 export default function HsdsData() {
   const selectedFolderPath = useSelectedFolderPath();
   const selectedDomainPath = useSelectedDomainPath();
+  const isFolderSelected = selectedFolderPath !== "/";
   const { data: rootFolder = undefined } = useSWR<Folder>('/api/folder/');
   const { folder: selectedFolder, isLoading: isLoadingFolder } = useFolder(selectedFolderPath);
   const { domain: selectedDomain, isLoading: isLoadingDomain } = useDomain(selectedDomainPath);
-  const { data: acls = [] } = useSWR<ACL[]>(selectedFolderPath !== "/" ? `/api/folder${selectedFolderPath}acl` : [])
+  const { data: acls = [] } = useSWR<ACL[]>(isFolderSelected ? `/api/folder${selectedFolderPath}acl` : [])
   const info = useServerInfo();
   const [deleteFolder, setDeleteFolder] = React.useState("");
   const [errorMessage, setErrorMessage] = React.useState("");
@@ -118,7 +119,7 @@ export default function HsdsData() {
     </Drawer>
     <Grid container>
       <Grid item xs={12} md={8} xl={9} className={classes.column}>
-        {selectedFolderPath && <div className={classes.crumbContainer}>
+        {isFolderSelected && <div className={classes.crumbContainer}>
           <FolderCrumbs className={classes.crumbs} />
           <Button variant="contained" color="secondary" startIcon={<DeleteIcon />} onClick={handleDeleteFolder}>Delete Folder</Button>
         </div>}
@@ -126,7 +127,7 @@ export default function HsdsData() {
           {acls.length > 0 && <AccessControl acls={acls} variant="wide" />}
           <FolderContent folder={selectedFolder} />
         </>}
-        {selectedFolderPath && isLoadingFolder && <Paper className={classes.loading}>
+        {isFolderSelected && isLoadingFolder && <Paper className={classes.loading}>
           Loading contents of <strong>{selectedFolderPath}</strong>...
           <LinearProgress className={classes.progress} /></Paper>}
       </Grid>
