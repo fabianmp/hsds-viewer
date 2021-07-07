@@ -26,7 +26,7 @@ export function useServerInfo() {
 }
 
 export function useFolder(path?: string) {
-    const { data: folder = null, error } = useSWR<Folder>(path ? `/api/folder${path}/` : null)
+    const { data: folder = null, error } = useSWR<Folder>(path !== "/" ? `/api/folder${path}/` : null)
     return {
         folder,
         isLoading: !folder && !error
