@@ -1,35 +1,22 @@
-import Button from '@material-ui/core/Button';
-import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogTitle from '@material-ui/core/DialogTitle';
+import Box from '@material-ui/core/Box';
 import Drawer from '@material-ui/core/Drawer';
-import Grid from '@material-ui/core/Grid';
-import LinearProgress from '@material-ui/core/LinearProgress';
-import Paper from '@material-ui/core/Paper';
-import Snackbar from '@material-ui/core/Snackbar';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
-import DeleteIcon from '@material-ui/icons/Delete';
-import Alert from '@material-ui/lab/Alert';
-import clsx from 'clsx';
-import React, { useEffect } from 'react';
-import { useHistory } from 'react-router';
+import React, { useEffect, useState } from 'react';
 import useSWR, { mutate } from 'swr';
-import { ACL, Folder } from '../Api';
-import { useDomain, useFolder, useSelectedDomainPath, useSelectedFolderPath, useServerInfo } from '../Hooks';
-import AccessControl from './AccessControl';
-import DomainInfo from './DomainInfo';
+import { Folder } from '../Api';
+import { useSelectedDomainPath, useSelectedFolderPath, useServerInfo } from '../Hooks';
+import DeleteDialogs, { DeleteOptions } from './DeleteDialogs';
+import FileContent from './FileContent';
 import FolderContent from './FolderContent';
-import FolderCrumbs from './FolderCrumbs';
 import FolderTree from './FolderTree';
 
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
-    column: {
+    content: {
       paddingLeft: theme.spacing(2),
       paddingRight: theme.spacing(2),
+      width: '100%',
       '& > * + *': {
         marginTop: theme.spacing(1),
       },
@@ -38,39 +25,27 @@ const useStyles = makeStyles((theme: Theme) =>
       width: 350,
     },
     drawerPaper: {
+      width: 350,
       overflow: 'auto',
       paddingTop: theme.spacing(10),
       paddingLeft: theme.spacing(0),
       paddingRight: theme.spacing(0),
     },
-    crumbContainer: {
-      display: 'flex',
-    },
-    crumbs: {
-      flexGrow: 1
-    },
-    loading: {
-      padding: theme.spacing(3),
-    },
-    progress: {
-      marginTop: theme.spacing(2),
-    },
   }),
 );
+
+const emptyDeleteOptions: DeleteOptions = {
+  path: "",
+  baseUrl: "",
+  handler: () => { }
+};
 
 export default function HsdsData() {
   const selectedFolderPath = useSelectedFolderPath();
   const selectedDomainPath = useSelectedDomainPath();
-  const isFolderSelected = selectedFolderPath !== "/";
   const { data: rootFolder = undefined } = useSWR<Folder>('/api/folder/');
-  const { folder: selectedFolder, isLoading: isLoadingFolder } = useFolder(selectedFolderPath);
-  const { domain: selectedDomain, isLoading: isLoadingDomain } = useDomain(selectedDomainPath);
-  const { data: acls = [] } = useSWR<ACL[]>(isFolderSelected ? `/api/folder${selectedFolderPath}acl` : [])
   const info = useServerInfo();
-  const [deleteFolder, setDeleteFolder] = React.useState("");
-  const [errorMessage, setErrorMessage] = React.useState("");
-  const [deleteInProgress, setDeleteInProgress] = React.useState(false);
-  const history = useHistory();
+  const [deleteOptions, setDeleteOptions] = useState<DeleteOptions>(emptyDeleteOptions);
 
   useEffect(() => {
     mutate(`/api/folder${selectedFolderPath}`);
@@ -79,88 +54,16 @@ export default function HsdsData() {
     mutate(`/api/domain${selectedDomainPath}/acl`);
   }, [info.username, selectedFolderPath, selectedDomainPath])
 
-  const handleErrorMessage = () => {
-    setErrorMessage("");
-  }
-
-  const handleDeleteFolder = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setDeleteFolder(selectedFolderPath);
-  }
-
-  const handleConfirmDeleteDomain = async () => {
-    if (deleteFolder.length === 0) {
-      return
-    }
-    setDeleteInProgress(true)
-    const response = await fetch(`/api/folder${deleteFolder}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-    if (!response.ok && response.status === 403) {
-      setErrorMessage(`You are not allowed to delete ${deleteFolder}`);
-    };
-
-    const folders = deleteFolder.split('/').slice(0, -2);
-    for (let i = 1; i <= folders.length; ++i) {
-      mutate(`/api/folder${folders.slice(0, i).concat('').join('/')}`);
-    }
-    setDeleteFolder("");
-    history.push(folders.concat('').join('/'));
-    setDeleteInProgress(false);
-  };
-
   const classes = useStyles();
   return (<>
-    <Drawer variant="permanent" className={classes.drawer} classes={{ paper: clsx(classes.drawer, classes.drawerPaper) }} open>
+    <Drawer variant="permanent" className={classes.drawer} classes={{ paper: classes.drawerPaper }} open>
       {rootFolder && <FolderTree folder={rootFolder} />}
     </Drawer>
-    <Grid container>
-      <Grid item xs={12} md={8} xl={9} className={classes.column}>
-        {isFolderSelected && <div className={classes.crumbContainer}>
-          <FolderCrumbs className={classes.crumbs} />
-          <Button variant="contained" color="secondary" startIcon={<DeleteIcon />} onClick={handleDeleteFolder}>Delete Folder</Button>
-        </div>}
-        {selectedFolder && <>
-          {acls.length > 0 && <AccessControl acls={acls} variant="wide" />}
-          <FolderContent folder={selectedFolder} />
-        </>}
-        {isFolderSelected && isLoadingFolder && <Paper className={classes.loading}>
-          Loading contents of <strong>{selectedFolderPath}</strong>...
-          <LinearProgress className={classes.progress} /></Paper>}
-      </Grid>
-      <Grid item xs={12} md={4} xl={3} className={classes.column}>
-        {selectedDomain && <DomainInfo domain={selectedDomain} />}
-        {selectedDomainPath && isLoadingDomain && <Paper className={classes.loading}>
-          Loading contents of <strong>{selectedDomainPath}</strong>...
-          <LinearProgress className={classes.progress} /></Paper>}
-      </Grid>
-    </Grid>
-    <Dialog open={deleteFolder.length > 0 && !deleteInProgress} onClose={() => setDeleteFolder("")}>
-      <DialogTitle>Delete Confirmation</DialogTitle>
-      <DialogContent>
-        <DialogContentText>Do you really want to delete <strong>{deleteFolder}</strong>?</DialogContentText>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={() => setDeleteFolder("")} color="primary" autoFocus>
-          Cancel
-        </Button>
-        <Button onClick={handleConfirmDeleteDomain} color="secondary">
-          Delete
-        </Button>
-      </DialogActions>
-    </Dialog>
-    <Dialog open={deleteInProgress}>
-      <DialogTitle>Please wait</DialogTitle>
-      <DialogContent>
-        <DialogContentText>Deleting folder <strong>{deleteFolder}</strong>...</DialogContentText>
-        <DialogContentText><LinearProgress /></DialogContentText>
-      </DialogContent>
-    </Dialog>
-    <Snackbar open={errorMessage.length > 0} autoHideDuration={5000} onClose={handleErrorMessage}>
-      <Alert onClose={handleErrorMessage} severity="error" variant="filled">{errorMessage}</Alert>
-    </Snackbar>
+    <Box className={classes.content}>
+      {selectedDomainPath
+        ? <FileContent setDeleteOptions={setDeleteOptions} />
+        : <FolderContent setDeleteOptions={setDeleteOptions} />}
+    </Box>
+    <DeleteDialogs deletePath={deleteOptions.path} deleteBaseUrl={deleteOptions.baseUrl} cancel={() => setDeleteOptions(emptyDeleteOptions)} done={deleteOptions.handler} />
   </>);
 }
