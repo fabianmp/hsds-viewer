@@ -1,30 +1,23 @@
-import Box from "@material-ui/core/Box";
-import { createStyles, makeStyles, Theme } from "@material-ui/core/styles";
-import React, { ReactNode } from "react";
+import { SxProps } from "@mui/material";
+import Box from "@mui/material/Box";
+import { ReactNode } from "react";
 
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    box: {
-      display: 'inline-flex',
-      alignItems: 'center',
-      flexWrap: 'wrap',
-      '& > *': {
-        marginRight: theme.spacing(1),
-      },
+const sx = {
+  box: {
+    display: "inline-flex",
+    alignItems: "center",
+    flexWrap: "wrap",
+    "& > *:not(:last-child)": {
+      marginRight: 1,
     },
-  }),
-);
+  },
+} as const;
 
 interface Props {
-  children: ReactNode
+  children: ReactNode;
+  sx?: SxProps;
 }
 
-export default function AlignIcon({ children }: Props) {
-  const classes = useStyles();
-
-  return (
-    <Box className={classes.box}>
-      {children}
-    </Box>
-  )
+export default function AlignIcon({ children, sx: overrideSx }: Props) {
+  return <Box sx={{ ...sx.box, ...overrideSx }}>{children}</Box>;
 }

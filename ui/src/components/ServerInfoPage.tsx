@@ -1,31 +1,18 @@
-import Card from "@material-ui/core/Card";
-import CardContent from "@material-ui/core/CardContent";
-import Container from "@material-ui/core/Container";
-import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
-import Typography from "@material-ui/core/Typography";
-import AccessTimeIcon from '@material-ui/icons/AccessTime';
-import HomeIcon from '@material-ui/icons/Home';
-import PageviewIcon from '@material-ui/icons/Pageview';
-import React from "react";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import HomeIcon from "@mui/icons-material/Home";
+import PageviewIcon from "@mui/icons-material/Pageview";
+import Card from "@mui/material/Card";
+import CardContent from "@mui/material/CardContent";
+import Container from "@mui/material/Container";
+import Typography from "@mui/material/Typography";
 import { useServerInfo } from "../Hooks";
 import AlignIcon from "./AlignIcon";
 
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    root: {
-      '& > * + *': {
-        marginTop: theme.spacing(2),
-      },
-    },
-  }),
-);
-
 export default function ServerInfoPage() {
-  const classes = useStyles();
   const info = useServerInfo();
 
   return (
-    <Container className={classes.root}>
+    <Container sx={{ "& > * + *": { marginTop: 2 } }}>
       <Card>
         <CardContent>
           <Typography variant="h5" component="h2">
@@ -39,15 +26,18 @@ export default function ServerInfoPage() {
           <Typography variant="body1">{info.greeting}</Typography>
         </CardContent>
         <CardContent>
-          <Typography variant="body2">
-            <AlignIcon><PageviewIcon />HSDS Viewer {info.version}</AlignIcon>
-          </Typography>
-          <Typography variant="body2">
-            <AlignIcon><HomeIcon />{info.endpoint}</AlignIcon>
-          </Typography>
-          <Typography variant="body2">
-            <AlignIcon><AccessTimeIcon />Started at {new Date(info.start_time! * 1000).toLocaleString()}</AlignIcon>
-          </Typography>
+          <AlignIcon sx={{ display: "flex" }}>
+            <PageviewIcon />
+            <Typography variant="body2">HSDS Viewer {info.version}</Typography>
+          </AlignIcon>
+          <AlignIcon sx={{ display: "flex" }}>
+            <HomeIcon />
+            <Typography variant="body2">{info.endpoint}</Typography>
+          </AlignIcon>
+          <AlignIcon sx={{ display: "flex" }}>
+            <AccessTimeIcon />
+            <Typography variant="body2">Started at {new Date(info.start_time! * 1000).toLocaleString()}</Typography>
+          </AlignIcon>
         </CardContent>
       </Card>
     </Container>

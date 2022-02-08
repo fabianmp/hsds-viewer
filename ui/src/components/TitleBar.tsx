@@ -1,14 +1,14 @@
-import AppBar from "@material-ui/core/AppBar";
-import IconButton from "@material-ui/core/IconButton";
-import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
-import Toolbar from "@material-ui/core/Toolbar";
-import Tooltip from "@material-ui/core/Tooltip";
-import Typography from "@material-ui/core/Typography";
-import ComputerIcon from '@material-ui/icons/Computer';
-import InfoIcon from '@material-ui/icons/Info';
-import NetworkCheckIcon from '@material-ui/icons/NetworkCheck';
-import StorageIcon from '@material-ui/icons/Storage';
-import React from "react";
+import ComputerIcon from "@mui/icons-material/Computer";
+import InfoIcon from "@mui/icons-material/Info";
+import NetworkCheckIcon from "@mui/icons-material/NetworkCheck";
+import StorageIcon from "@mui/icons-material/Storage";
+import AppBar from "@mui/material/AppBar";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import { Theme } from "@mui/material/styles";
+import Toolbar from "@mui/material/Toolbar";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
 import { NavLink } from "react-router-dom";
 import useSWR from "swr";
 import { CurrentUser } from "../Api";
@@ -16,76 +16,58 @@ import { useServerInfo } from "../Hooks";
 import AlignIcon from "./AlignIcon";
 import UserMenu from "./UserMenu";
 
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    titleBar: {
-      zIndex: theme.zIndex.drawer + 1,
-    },
-    grow: {
-      flexGrow: 1,
-    },
-    toolbarButton: {
-      padding: 0
-    },
-    toolbarSmall: {
-      '& > *': {
-        marginTop: theme.spacing(1),
-        marginBottom: theme.spacing(1),
-      },
-    },
-    toolbarLarge: {
-      '& > *': {
-        marginLeft: theme.spacing(2),
-        marginRight: theme.spacing(2),
-        marginTop: theme.spacing(1),
-        marginBottom: theme.spacing(1),
-      },
-    },
-  }),
-);
-
 export default function TitleBar() {
-  const classes = useStyles();
-  const { data: features = [] } = useSWR<string[]>('/api/features');
-  const { data: currentUser = { name: "<unknown>", roles: [] } } = useSWR<CurrentUser>('/api/current_user');
+  const { data: features = [] } = useSWR<string[]>("/api/features");
+  const { data: currentUser = { name: "<unknown>", roles: [] } } = useSWR<CurrentUser>("/api/current_user");
   const isAdmin = currentUser.roles.includes("admin");
   const hasNodeInfo = features.includes("node_info");
   const info = useServerInfo();
 
   return (
-    <AppBar position="fixed" className={classes.titleBar}>
-      <Toolbar className={classes.toolbarLarge}>
+    <AppBar position="fixed" sx={{ zIndex: (theme: Theme) => theme.zIndex.drawer + 1 }}>
+      <Toolbar sx={{ "& > *:not(:last-child)": { marginRight: 4 } }}>
         <Tooltip title="View files">
-          <NavLink to="/" component={IconButton} color="inherit" className={classes.toolbarButton}>
-            <Typography variant="h6" noWrap>
-              <AlignIcon><StorageIcon />{info.endpoint}</AlignIcon>
-            </Typography>
-          </NavLink>
-        </Tooltip>
-        <Typography variant="h6">
-          <AlignIcon><NetworkCheckIcon />{info.state}</AlignIcon>
-        </Typography>
-        {(hasNodeInfo && isAdmin) ?
-          <Tooltip title="View node info">
-            <NavLink to="/nodes" component={IconButton} color="inherit" className={classes.toolbarButton}>
-              <Typography variant="h6">
-                <AlignIcon><ComputerIcon />{info.node_count} nodes</AlignIcon>
+          <Button component={NavLink} to="/" color="inherit" sx={{ padding: 0 }}>
+            <AlignIcon>
+              <StorageIcon />
+              <Typography variant="h6" noWrap>
+                {info.endpoint}
               </Typography>
-            </NavLink>
-          </Tooltip>
-          :
-          <Typography variant="h6">
-            <AlignIcon><ComputerIcon />{info.node_count} nodes</AlignIcon>
-          </Typography>
-        }
-        <Tooltip title="Show HSDS server info">
-          <NavLink to="/info" component={IconButton} color="inherit" className={classes.toolbarButton}>
-            <Typography variant="h6">
-              <AlignIcon><InfoIcon />v{info.hsds_version}</AlignIcon>
-            </Typography>
-          </NavLink>
+            </AlignIcon>
+          </Button>
         </Tooltip>
-        <div className={classes.grow} />
+        <AlignIcon>
+          <NetworkCheckIcon />
+          <Typography variant="h6">{info.state}</Typography>
+        </AlignIcon>
+        {hasNodeInfo && isAdmin ? (
+          <Tooltip title="View node info">
+            <Button component={NavLink} to="/nodes" color="inherit" sx={{ padding: 0 }}>
+              <AlignIcon>
+                <ComputerIcon />
+                <Typography variant="h6" sx={{ padding: 0 }}>
+                  {info.node_count} nodes
+                </Typography>
+              </AlignIcon>
+            </Button>
+          </Tooltip>
+        ) : (
+          <AlignIcon>
+            <ComputerIcon />
+            <Typography variant="h6" sx={{ padding: 0 }}>
+              {info.node_count} nodes
+            </Typography>
+          </AlignIcon>
+        )}
+        <Tooltip title="Show HSDS server info">
+          <Button component={NavLink} to="/info" color="inherit" sx={{ padding: 0 }}>
+            <AlignIcon>
+              <InfoIcon />
+              <Typography variant="h6">v{info.hsds_version}</Typography>
+            </AlignIcon>
+          </Button>
+        </Tooltip>
+        <Box sx={{ flexGrow: 1 }} />
         <UserMenu username={currentUser.name} />
       </Toolbar>
     </AppBar>
