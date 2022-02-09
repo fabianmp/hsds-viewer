@@ -25,6 +25,18 @@ def require_role(role):
     return require_role_decorator
 
 
+def init_session_from_environment():
+    session.setdefault(
+        "roles",
+        [
+            r.strip()
+            for r in os.environ.get("HSDS_DEFAULT_ROLES", "").split(",")
+            if len(r.strip()) > 0
+        ],
+    )
+    return session.setdefault("hsds_user", os.environ.get("HSDS_DEFAULT_USER", "admin"))
+
+
 def update_session(token):
     session["access_token"] = token["access_token"]
     session["refresh_token"] = token["refresh_token"]

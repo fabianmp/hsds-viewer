@@ -15,7 +15,11 @@ from h5pyd import Config, Dataset, File, Folder, Group, getServerInfo
 from werkzeug.routing import PathConverter
 
 from _version import __version__
-from authentication import configure_authentication, require_role
+from authentication import (
+    configure_authentication,
+    init_session_from_environment,
+    require_role,
+)
 
 logging.basicConfig(
     format=os.environ.get("LOG_FORMAT", "%(asctime)s\t%(levelname)s\t%(message)s"),
@@ -42,7 +46,7 @@ def get_username() -> str:
     if "username" in session:
         return session.setdefault("hsds_user", session["username"])
     else:
-        return session.setdefault("hsds_user", os.environ.get("HSDS_DEFAULT_USER", ""))
+        return init_session_from_environment()
 
 
 def get_credentials() -> Dict[str, str]:
@@ -330,12 +334,15 @@ def delete_domain(path: str):
 @app.route("/api/current_user", methods=["GET", "POST"])
 def current_user():
     if request.method == "POST":
-        session["hsds_user"] = request.get_json()["name"]
+        username = request.get_json()["name"]
+        session["hsds_user"] = username
+        if "OIDC_ENDPOINT" not in os.environ:
+            session["roles"] = ["admin"] if username == "admin" else []
 
     if "username" in session:
         session.setdefault("hsds_user", session["username"])
     else:
-        session.setdefault("hsds_user", os.environ.get("HSDS_DEFAULT_USER", "admin"))
+        init_session_from_environment()
 
     return json.dumps({"name": session["hsds_user"], "roles": session.get("roles", [])})
 
