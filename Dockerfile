@@ -7,16 +7,22 @@ RUN npm install
 COPY ui /ui
 RUN npm run-script build
 
-FROM python:3.8-slim-buster
+FROM python:3.10-slim-buster as base
 
 WORKDIR /hsds-viewer
 COPY api/requirements.txt /hsds-viewer/
 RUN pip install --no-cache-dir --prefer-binary \
         -r /hsds-viewer/requirements.txt \
-        eventlet==0.30.2 \
-        gunicorn==20.0.4
+        gunicorn==20.1.0
 
 COPY api /hsds-viewer
 COPY --from=web /ui/build /hsds-viewer/static
 
-CMD  [ "gunicorn", "--worker-class=eventlet", "--bind=0.0.0.0:80", "app:app" ]
+CMD  [ "gunicorn", "--worker-class=gthread", "--bind=0.0.0.0:80", "app:app" ]
+
+FROM base as dev
+COPY api/requirements-dev.txt /hsds-viewer/
+RUN pip install --no-cache-dir --prefer-binary \
+        -r /hsds-viewer/requirements-dev.txt
+
+FROM base as final
