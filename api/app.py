@@ -380,6 +380,12 @@ if "FEATURE_NODE_INFO_ENABLED" in os.environ:
         return json.dumps(nodes)
 
 
+if "FEATURE_MONITORING_DASHBOARD_ENABLED" in os.environ:
+    import flask_monitoringdashboard as dashboard
+
+    dashboard.bind(app)
+
+
 if os.environ.get("ENABLE_CORS", False):
     from flask_cors import CORS
 
