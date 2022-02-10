@@ -17,12 +17,14 @@ fullnameOverride: ""
 hsds:
   endpoint: ""
   defaultUser: ""
+  defaultRoles: []
   credentials: {}
     # user1: password1
     # user2: password2
 
 features:
   nodeInfo: false
+  monitoringDashboard: false
 
 oidc:
   enabled: false

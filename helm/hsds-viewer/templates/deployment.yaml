@@ -39,12 +39,20 @@ spec:
             - name: HSDS_DEFAULT_USER
               value: {{ .Values.hsds.defaultUser }}
             {{- end }}
+            {{- if .Values.hsds.defaultRoles }}
+            - name: HSDS_DEFAULT_ROLES
+              value: {{ .Values.hsds.defaultRoles | join "," }}
+            {{- end }}
             {{- if .Values.hsds.credentials }}
             - name: HSDS_CREDENTIALS_FILE
               value: /credentials.json
             {{- end }}
             {{- if .Values.features.nodeInfo }}
             - name: FEATURE_NODE_INFO_ENABLED
+              value: "1"
+            {{- end }}
+            {{- if .Values.features.monitoringDashboard }}
+            - name: FEATURE_MONITORING_DASHBOARD_ENABLED
               value: "1"
             {{- end }}
             {{- if .Values.oidc.enabled }}
